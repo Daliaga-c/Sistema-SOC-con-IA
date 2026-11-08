@@ -1,0 +1,20 @@
+# Variables de entorno y secretos sensibles
+.env
+*.env
+*.env.local
+
+# Archivos de certificados y llaves privadas
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node.js
+node_modules/
+
+# Logs y temporales
+*.log
