@@ -1,0 +1,37 @@
+{
+  "vector_size": 256,
+  "documents": [
+    {
+      "id": "nist-incident-handling",
+      "content": "NIST SP 800-61 Rev 2: preparar, detectar, analizar, contener, erradicar, recuperar y aprender. Cuando hay uso indebido de credenciales, priorizar confirmación del usuario, aislar la cuenta, revisar sesiones activas y bloquear fuentes sospechosas con aprobación humana.",
+      "metadata": {
+        "source": "NIST",
+        "theme": "incident_response"
+      }
+    },
+    {
+      "id": "mitre-t1110",
+      "content": "MITRE ATT&CK T1110 Brute Force: el atacante intenta adivinar credenciales o probar combinaciones de usuario y contraseña. Recomendado bloquear IP, activar MFA, limitar intentos y revisar logs de autenticación para detectar patrones de fuerza bruta.",
+      "metadata": {
+        "source": "MITRE",
+        "technique": "T1110"
+      }
+    },
+    {
+      "id": "mitre-t1078",
+      "content": "MITRE ATT&CK T1078 Valid Accounts: adversarios reutilizan credenciales válidas, a menudo desde horarios inusuales o IPs no habituales. Se recomienda revisar sesión, revocar tokens, cambiar contraseñas y validar si la actividad corresponde a un usuario real.",
+      "metadata": {
+        "source": "MITRE",
+        "technique": "T1078"
+      }
+    },
+    {
+      "id": "soc-hardening",
+      "content": "Hardening SOC: aplicar MFA obligatorio, controles de sesión, monitorización de IPs anómalas, alertas sobre accesos en horas extrañas y orden de contención con sign-off humano.",
+      "metadata": {
+        "source": "SOC",
+        "theme": "hardening"
+      }
+    }
+  ]
+}
