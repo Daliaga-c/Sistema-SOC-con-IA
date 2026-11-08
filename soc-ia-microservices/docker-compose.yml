@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+    container_name: soc-ia-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - INGESTION_SERVICE_URL=http://ingestion-service:8001
+      - ML_SERVICE_URL=http://ml-anomaly-detection:8002
+      - ALERTS_SERVICE_URL=http://alerts-incidents-service:8003
+      - COPILOT_SERVICE_URL=http://genai-copilot-service:8004
+      - THREAT_INTEL_URL=http://threat-intelligence-service:8005
+    depends_on:
+      - ingestion-service
+      - ml-anomaly-detection
+      - alerts-incidents-service
+      - genai-copilot-service
+    networks:
+      - soc-network
+
+  ingestion-service:
+    build:
+      context: ./services/ingestion-service
+    container_name: soc-ia-ingestion
+    ports:
+      - "8001:8001"
+    environment:
+      - ML_SERVICE_URL=http://ml-anomaly-detection:8002
+      - ALERTS_SERVICE_URL=http://alerts-incidents-service:8003
+    networks:
+      - soc-network
+
+  ml-anomaly-detection:
+    build:
+      context: ./services/ml-anomaly-detection
+    container_name: soc-ia-ml-service
+    ports:
+      - "8002:8002"
+    networks:
+      - soc-network
+
+  alerts-incidents-service:
+    build:
+      context: ./services/alerts-incidents-service
+    container_name: soc-ia-alerts-service
+    ports:
+      - "8003:8003"
+    networks:
+      - soc-network
+
+  genai-copilot-service:
+    build:
+      context: ./services/genai-copilot-service
+    container_name: soc-ia-copilot-service
+    ports:
+      - "8004:8004"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - soc-network
+
+  threat-intelligence-service:
+    build:
+      context: ./services/threat-intelligence-service
+    container_name: soc-ia-threat-intel
+    ports:
+      - "8005:8005"
+    networks:
+      - soc-network
+
+  redis-broker:
+    image: redis:7-alpine
+    container_name: soc-ia-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - soc-network
+
+networks:
+  soc-network:
+    driver: bridge

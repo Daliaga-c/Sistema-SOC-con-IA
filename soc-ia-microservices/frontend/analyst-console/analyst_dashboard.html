@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC-IA | Consola del Analista de Ciberseguridad</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <span>🛡️</span> SOC-IA Copilot
+        </div>
+        <a href="#" class="nav-link active">📊 Panel de Alertas</a>
+        <a href="#" class="nav-link">🔍 Investigaciones</a>
+        <a href="#" class="nav-link">⚙️ Ingesta Wazuh</a>
+        <a href="#" class="nav-link">🤖 MLOps & Features</a>
+        <div style="margin-top: auto; font-size: 0.75rem; color: var(--text-muted);">
+            v1.0.0 Microservicios
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h2>Consola de Monitoreo & Detección Anómala</h2>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Triaje inteligente con correlación Wazuh SIEM + Machine Learning</span>
+            </div>
+            <div class="user-badge">
+                <div class="status-dot"></div>
+                <span>Analista N1: <strong>Diego Aliaga</strong></span>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Alertas Hoy</div>
+                    <div class="kpi-val" id="kpi-total">3</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Inicios de Sesión Anómalos</div>
+                    <div class="kpi-val" style="color: var(--critical);">2</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Riesgo Promedio (ML)</div>
+                    <div class="kpi-val" style="color: var(--high);">74.8%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Mitigaciones Asistidas</div>
+                    <div class="kpi-val" style="color: var(--low);">1</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3>Alertas de Autenticación Activas</h3>
+                    <button class="btn btn-ai" onclick="loadAlerts()">🔄 Actualizar Alertas</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Origen</th>
+                            <th>Usuario</th>
+                            <th>IP Origen</th>
+                            <th>Severidad</th>
+                            <th>Score Riesgo ML</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-tbody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Copilot Chat Drawer -->
+    <div class="chat-drawer">
+        <div class="chat-header">
+            <h4>🤖 SOC Copilot (GenAI / RAG)</h4>
+            <span style="font-size: 0.75rem; color: var(--low);">● Online</span>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="msg msg-copilot">
+                Bienvenido a la consola SOC-IA. Selecciona cualquier alerta de la tabla y haz clic en <strong>"Investigar con IA"</strong> para generar el análisis forense con MITRE ATT&CK y guías NIST.
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Pregunta al Copilot..." onkeypress="handleKey(event)">
+            <button class="btn btn-ai" onclick="sendCustomMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        let currentAlert = null;
+
+        async function loadAlerts() {
+            try {
+                const res = await fetch('/api/alerts');
+                const data = await res.json();
+                const tbody = document.getElementById('alerts-tbody');
+                tbody.innerHTML = '';
+
+                data.alerts.forEach(a => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${a.alert_id}</strong></td>
+                        <td>${a.raw_event.source_system}</td>
+                        <td>${a.raw_event.user}</td>
+                        <td>${a.raw_event.source_ip}</td>
+                        <td><span class="badge badge-${a.severity}">${a.severity}</span></td>
+                        <td><strong>${a.ml_score ? a.ml_score.risk_score + '%' : 'N/A'}</strong></td>
+                        <td style="display: flex; gap: 8px;">
+                            <button class="btn btn-ai" onclick='investigateAlert(${JSON.stringify(a)})'>Investigar con IA</button>
+                            <button class="btn btn-mitigate" onclick="mitigateAlert('${a.alert_id}', '${a.raw_event.source_ip}')">Bloquear IP</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                document.getElementById('kpi-total').innerText = data.total;
+            } catch (err) {
+                console.error("Error cargando alertas:", err);
+            }
+        }
+
+        async function investigateAlert(alertData) {
+            currentAlert = alertData;
+            addMessage(`Solicito análisis para la alerta ${alertData.alert_id} (${alertData.title})`, 'user');
+            
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: `Investigar alerta ${alertData.alert_id}`,
+                        alert_context: alertData,
+                        analyst_name: 'Diego Aliaga'
+                    })
+                });
+                const data = await res.json();
+                addMessage(data.reply.replace(/###/g, '<strong>').replace(/\*\*/g, '<b>'), 'copilot');
+            } catch (err) {
+                addMessage("Error al conectar con el servicio de IA Copilot.", 'copilot');
+            }
+        }
+
+        async function mitigateAlert(alertId, ip) {
+            const confirmMitigation = confirm(`[Human-in-the-Loop] ¿Confirmas la orden de Active Response para bloquear la IP ${ip} en Wazuh?`);
+            if (!confirmMitigation) return;
+
+            try {
+                const res = await fetch(`/api/alerts/${alertId}/mitigate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        analyst_name: 'Diego Aliaga',
+                        action: 'BLOCK_IP',
+                        target: ip,
+                        approved_by_human: true
+                    })
+                });
+                const result = await res.json();
+                alert(`✅ Bloqueo ejecutado exitosamente:\nComando: ${result.command_dispatched}`);
+                loadAlerts();
+            } catch (err) {
+                alert("Error al ejecutar la mitigación.");
+            }
+        }
+
+        function addMessage(htmlContent, type) {
+            const body = document.getElementById('chat-body');
+            const div = document.createElement('div');
+            div.className = `msg msg-${type}`;
+            div.innerHTML = htmlContent;
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        async function sendCustomMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addMessage(msg, 'user');
+            input.value = '';
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: msg,
+                        alert_context: currentAlert,
+                        analyst_name: 'Diego Aliaga'
+                    })
+                });
+                const data = await res.json();
+                addMessage(data.reply, 'copilot');
+            } catch (err) {
+                addMessage("Servicio de IA no disponible.", 'copilot');
+            }
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter') sendCustomMessage();
+        }
+
+        window.onload = loadAlerts;
+    </script>
+</body>
+</html>
