@@ -11,28 +11,51 @@
     <div class="login-card">
         <div class="logo">🛡️ SOC-IA</div>
         <div class="subtitle">Autenticación de Operador del Centro de Seguridad</div>
-        <form onsubmit="handleLogin(event)">
+        <form id="login-form" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label>Correo Institucional</label>
-                <input type="email" value="analista.soc@empresa.com" required>
+                    <input id="email" type="email" value="analista.soc@empresa.com" required>
             </div>
             <div class="form-group">
                 <label>Contraseña</label>
-                <input type="password" value="••••••••••••" required>
+                    <input id="password" type="password" value="soc-ia-2025" required>
             </div>
             <div class="form-group">
                 <label>Código de Autenticación MFA (OTP)</label>
-                <input type="text" placeholder="123 456" maxlength="6" required value="482910">
+                    <input id="otp" type="text" placeholder="123 456" maxlength="6" required value="482910">
             </div>
             <button type="submit" class="btn-submit">Ingresar a la Consola</button>
         </form>
-        <div class="footer-note">Acceso restringido y auditado. Cumple con NIST SP 800-63B.</div>
-    </div>
-    <script>
-        function handleLogin(e) {
-            e.preventDefault();
-            window.location.href = '/';
-        }
-    </script>
+            <div id="login-error" class="footer-note" style="color: #ff7a7a; display: none;"></div>
+            <div class="footer-note">Acceso restringido y auditado. Cumple con NIST SP 800-63B.</div>
+        </div>
+        <script>
+            async function handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const otp = document.getElementById('otp').value.trim();
+                const errorBox = document.getElementById('login-error');
+
+                try {
+                    const res = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, otp })
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(data.detail || 'No se pudo iniciar sesión');
+                    }
+
+                    localStorage.setItem('soc_token', data.token);
+                    window.location.href = '/';
+                } catch (err) {
+                    errorBox.textContent = err.message;
+                    errorBox.style.display = 'block';
+                }
+            }
+        </script>
 </body>
 </html>
