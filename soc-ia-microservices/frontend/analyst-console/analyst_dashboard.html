@@ -103,117 +103,148 @@
     <script>
         let currentAlert = null;
 
-        async function loadAlerts() {
-            try {
-                const res = await fetch('/api/alerts');
-                const data = await res.json();
-                const tbody = document.getElementById('alerts-tbody');
-                tbody.innerHTML = '';
+    function getAuthHeaders(extra = {}) {
+        const token = localStorage.getItem('soc_token');
+        return {
+            ...extra,
+            'Authorization': token ? `Bearer ${token}` : '',
+        };
+    }
 
-                data.alerts.forEach(a => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${a.alert_id}</strong></td>
-                        <td>${a.raw_event.source_system}</td>
-                        <td>${a.raw_event.user}</td>
-                        <td>${a.raw_event.source_ip}</td>
-                        <td><span class="badge badge-${a.severity}">${a.severity}</span></td>
-                        <td><strong>${a.ml_score ? a.ml_score.risk_score + '%' : 'N/A'}</strong></td>
-                        <td style="display: flex; gap: 8px;">
-                            <button class="btn btn-ai" onclick='investigateAlert(${JSON.stringify(a)})'>Investigar con IA</button>
-                            <button class="btn btn-mitigate" onclick="mitigateAlert('${a.alert_id}', '${a.raw_event.source_ip}')">Bloquear IP</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-                document.getElementById('kpi-total').innerText = data.total;
-            } catch (err) {
-                console.error("Error cargando alertas:", err);
-            }
+    function requireAuth() {
+        const token = localStorage.getItem('soc_token');
+        if (!token) {
+            window.location.href = '/login';
+            return false;
         }
+        return true;
+    }
 
-        async function investigateAlert(alertData) {
-            currentAlert = alertData;
-            addMessage(`Solicito análisis para la alerta ${alertData.alert_id} (${alertData.title})`, 'user');
+    async function loadAlerts() {
+        if (!requireAuth()) return;
+
+        try {
+            const res = await fetch('/api/alerts', {
+                headers: getAuthHeaders()
+            });
+
+            if (res.status === 401) {
+                localStorage.removeItem('soc_token');
+                window.location.href = '/login';
+                return;
+            }
+
+            const data = await res.json();
+            const tbody = document.getElementById('alerts-tbody');
+            tbody.innerHTML = '';
+
+            data.alerts.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${a.alert_id}</strong></td>
+                    <td>${a.raw_event.source_system}</td>
+                    <td>${a.raw_event.user}</td>
+                    <td>${a.raw_event.source_ip}</td>
+                    <td><span class="badge badge-${a.severity}">${a.severity}</span></td>
+                    <td><strong>${a.ml_score ? a.ml_score.risk_score + '%' : 'N/A'}</strong></td>
+                    <td style="display: flex; gap: 8px;">
+                        <button class="btn btn-ai" onclick='investigateAlert(${JSON.stringify(a)})'>Investigar con IA</button>
+                        <button class="btn btn-mitigate" onclick="mitigateAlert('${a.alert_id}', '${a.raw_event.source_ip}')">Bloquear IP</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('kpi-total').innerText = data.total;
+        } catch (err) {
+            console.error("Error cargando alertas:", err);
+        }
+    }
+
+    async function investigateAlert(alertData) {
+        if (!requireAuth()) return;
+        currentAlert = alertData;
+        addMessage(`Solicito análisis para la alerta ${alertData.alert_id} (${alertData.title})`, 'user');
             
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: `Investigar alerta ${alertData.alert_id}`,
-                        alert_context: alertData,
-                        analyst_name: 'Diego Aliaga'
-                    })
-                });
-                const data = await res.json();
-                addMessage(data.reply.replace(/###/g, '<strong>').replace(/\*\*/g, '<b>'), 'copilot');
-            } catch (err) {
-                addMessage("Error al conectar con el servicio de IA Copilot.", 'copilot');
-            }
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    message: `Investigar alerta ${alertData.alert_id}`,
+                    alert_context: alertData,
+                    analyst_name: 'Diego Aliaga'
+                })
+            });
+            const data = await res.json();
+            addMessage(data.reply.replace(/###/g, '<strong>').replace(/\*\*/g, '<b>'), 'copilot');
+        } catch (err) {
+            addMessage("Error al conectar con el servicio de IA Copilot.", 'copilot');
         }
+    }
 
-        async function mitigateAlert(alertId, ip) {
-            const confirmMitigation = confirm(`[Human-in-the-Loop] ¿Confirmas la orden de Active Response para bloquear la IP ${ip} en Wazuh?`);
-            if (!confirmMitigation) return;
+    async function mitigateAlert(alertId, ip) {
+        if (!requireAuth()) return;
+        const confirmMitigation = confirm(`[Human-in-the-Loop] ¿Confirmas la orden de Active Response para bloquear la IP ${ip} en Wazuh?`);
+        if (!confirmMitigation) return;
 
-            try {
-                const res = await fetch(`/api/alerts/${alertId}/mitigate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        analyst_name: 'Diego Aliaga',
-                        action: 'BLOCK_IP',
-                        target: ip,
-                        approved_by_human: true
-                    })
-                });
-                const result = await res.json();
-                alert(`✅ Bloqueo ejecutado exitosamente:\nComando: ${result.command_dispatched}`);
-                loadAlerts();
-            } catch (err) {
-                alert("Error al ejecutar la mitigación.");
-            }
+        try {
+            const res = await fetch(`/api/alerts/${alertId}/mitigate`, {
+                method: 'POST',
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    analyst_name: 'Diego Aliaga',
+                    action: 'BLOCK_IP',
+                    target: ip,
+                    approved_by_human: true
+                })
+            });
+            const result = await res.json();
+            alert(`✅ Bloqueo ejecutado exitosamente:\nComando: ${result.command_dispatched}`);
+            loadAlerts();
+        } catch (err) {
+            alert("Error al ejecutar la mitigación.");
         }
+    }
 
-        function addMessage(htmlContent, type) {
-            const body = document.getElementById('chat-body');
-            const div = document.createElement('div');
-            div.className = `msg msg-${type}`;
-            div.innerHTML = htmlContent;
-            body.appendChild(div);
-            body.scrollTop = body.scrollHeight;
+    function addMessage(htmlContent, type) {
+        const body = document.getElementById('chat-body');
+        const div = document.createElement('div');
+        div.className = `msg msg-${type}`;
+        div.innerHTML = htmlContent;
+        body.appendChild(div);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    async function sendCustomMessage() {
+        if (!requireAuth()) return;
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        addMessage(msg, 'user');
+        input.value = '';
+
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    message: msg,
+                    alert_context: currentAlert,
+                    analyst_name: 'Diego Aliaga'
+                })
+            });
+            const data = await res.json();
+            addMessage(data.reply, 'copilot');
+        } catch (err) {
+            addMessage("Servicio de IA no disponible.", 'copilot');
         }
+    }
 
-        async function sendCustomMessage() {
-            const input = document.getElementById('chat-input');
-            const msg = input.value.trim();
-            if (!msg) return;
-            addMessage(msg, 'user');
-            input.value = '';
+    function handleKey(e) {
+        if (e.key === 'Enter') sendCustomMessage();
+    }
 
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: msg,
-                        alert_context: currentAlert,
-                        analyst_name: 'Diego Aliaga'
-                    })
-                });
-                const data = await res.json();
-                addMessage(data.reply, 'copilot');
-            } catch (err) {
-                addMessage("Servicio de IA no disponible.", 'copilot');
-            }
-        }
-
-        function handleKey(e) {
-            if (e.key === 'Enter') sendCustomMessage();
-        }
-
-        window.onload = loadAlerts;
+    window.onload = loadAlerts;
     </script>
 </body>
 </html>
