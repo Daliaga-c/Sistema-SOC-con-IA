@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import AlertRecord, AuditLog, SessionLocal, create_db_and_tables, get_db
+from wazuh_client import dispatch_active_response
 
 app = FastAPI(title="SOC-IA Alerts & Incidents Service", version="1.0.0")
 
@@ -204,6 +205,8 @@ async def execute_mitigation(alert_id: str, req: MitigationRequest, db: Session 
     alert.status = "CONTENIDA"
     alert.mitigation_status = f"EJECUTADA ({req.action} on {req.target} por {req.analyst_name})"
 
+    wazuh_result = dispatch_active_response(req.action, req.target)
+
     audit_entry = AuditLog(
         alert_id=alert.alert_id,
         analyst_name=req.analyst_name,
@@ -213,6 +216,7 @@ async def execute_mitigation(alert_id: str, req: MitigationRequest, db: Session 
         details={
             "timestamp": datetime.utcnow().isoformat(),
             "command_dispatched": f"wazuh-control active-response {req.action} target={req.target}",
+            "wazuh_result": wazuh_result,
         },
     )
     db.add(audit_entry)
@@ -225,6 +229,7 @@ async def execute_mitigation(alert_id: str, req: MitigationRequest, db: Session 
         "operator": req.analyst_name,
         "timestamp": datetime.utcnow().isoformat(),
         "command_dispatched": f"wazuh-control active-response {req.action} target={req.target}",
+        "wazuh_result": wazuh_result,
     }
 
 

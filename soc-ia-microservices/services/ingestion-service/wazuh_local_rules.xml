@@ -1,0 +1,21 @@
+<group name="authentication_anomalies,">
+  <rule id="100100" level="10">
+    <if_matched_sid>5710</if_matched_sid>
+    <same_source_ip />
+    <frequency>8</frequency>
+    <timeframe>120</timeframe>
+    <description>SOC-IA: Múltiples fallos de autenticación SSH desde la misma IP (Fuerza Bruta).</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100101" level="8">
+    <if_matched_sid>60100</if_matched_sid>
+    <match>srcip!=10.0.0.0/8</match>
+    <description>SOC-IA: Acceso exitoso en horario inusual desde IP externa (T1078).</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+</group>
