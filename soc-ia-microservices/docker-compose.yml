@@ -48,6 +48,24 @@ services:
     container_name: soc-ia-alerts-service
     ports:
       - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://soc_admin:soc_secure_password@postgres-db:5432/soc_incidents
+    depends_on:
+      - postgres-db
+    networks:
+      - soc-network
+
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: soc-ia-postgres
+    environment:
+      POSTGRES_USER: soc_admin
+      POSTGRES_PASSWORD: soc_secure_password
+      POSTGRES_DB: soc_incidents
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     networks:
       - soc-network
 
@@ -78,6 +96,9 @@ services:
       - "6379:6379"
     networks:
       - soc-network
+
+volumes:
+  pgdata:
 
 networks:
   soc-network:
