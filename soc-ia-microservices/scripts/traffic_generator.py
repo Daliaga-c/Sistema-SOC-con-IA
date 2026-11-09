@@ -50,8 +50,8 @@ def simulate_brute_force():
     attacker_ip = "185.220.101.5"
     passwords = ["123456", "admin", "password", "root", "toor", "12345678", "qwerty", "master", "login", "secret", "pass123", "admin2026"]
     
-    for i, pwd in enumerate(passwords, start=1):
-        print(f" Intento {i:02d}/12 probando credencial '{pwd}'...")
+    for i, _ in enumerate(passwords, start=1):
+        print(f" Intento {i:02d}/12 probando credencial (redactada)...")
         send_event(user="admin", ip=attacker_ip, status="FAILURE", origin="Portal Web Dummy", device="Hydra/9.2 BruteForcer")
         time.sleep(0.3)  # Ráfaga rápida
 
