@@ -224,6 +224,23 @@ tr:hover {
     color: white;
 }
 
+.btn-feedback-tp {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--low);
+    border: 1px solid var(--low);
+}
+
+.btn-feedback-fp {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: var(--medium);
+    border: 1px solid var(--medium);
+}
+
+.feedback-recorded {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 /* Right Copilot Chat Drawer */
 .chat-drawer {
     width: 380px;

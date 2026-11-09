@@ -210,6 +210,25 @@ async def mitigate_alert(alert_id: str, request: Request, current_user: Dict[str
             return JSONResponse(status_code=503, content={"error": "Alerts service unavailable", "details": str(exc)})
 
 
+@app.post("/api/alerts/{alert_id}/feedback")
+async def submit_alert_feedback(
+    alert_id: str,
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    body = await request.json()
+    body["analyst_name"] = current_user["name"]
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            r = await client.post(f"{ALERTS_URL}/alerts/{alert_id}/feedback", json=body)
+            return JSONResponse(status_code=r.status_code, content=r.json())
+        except httpx.HTTPError as exc:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Alerts service unavailable", "details": str(exc)},
+            )
+
+
 # Proxy hacia microservicio de Inferencia de ML
 @app.post("/api/predict")
 async def predict_anomaly(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):

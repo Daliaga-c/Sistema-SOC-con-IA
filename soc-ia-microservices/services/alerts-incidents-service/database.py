@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from typing import Generator
 
-from sqlalchemy import JSON, Column, DateTime, Integer, String, create_engine
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 
@@ -48,6 +48,18 @@ class AlertRecord(Base):
     mitigation_status = Column(String(255), nullable=False, default="PENDIENTE_APROBACION")
     mitre_attack = Column(JSON, nullable=False, default=list)
     feedback = Column(JSON, nullable=True)
+
+
+class FeedbackRecord(Base):
+    __tablename__ = "feedback_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    alert_id = Column(String(64), ForeignKey("alerts.alert_id"), unique=True, nullable=False, index=True)
+    label = Column(String(32), nullable=False)
+    analyst_name = Column(String(255), nullable=False)
+    notes = Column(String, nullable=True)
+    raw_event = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class AuditLog(Base):

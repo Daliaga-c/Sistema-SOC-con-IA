@@ -72,6 +72,7 @@
                             <th>IP Origen</th>
                             <th>Severidad</th>
                             <th>Score Riesgo ML</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -140,23 +141,99 @@
 
             data.alerts.forEach(a => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${a.alert_id}</strong></td>
-                    <td>${a.raw_event.source_system}</td>
-                    <td>${a.raw_event.user}</td>
-                    <td>${a.raw_event.source_ip}</td>
-                    <td><span class="badge badge-${a.severity}">${a.severity}</span></td>
-                    <td><strong>${a.ml_score ? a.ml_score.risk_score + '%' : 'N/A'}</strong></td>
-                    <td style="display: flex; gap: 8px;">
-                        <button class="btn btn-ai" onclick='investigateAlert(${JSON.stringify(a)})'>Investigar con IA</button>
-                        <button class="btn btn-mitigate" onclick="mitigateAlert('${a.alert_id}', '${a.raw_event.source_ip}')">Bloquear IP</button>
-                    </td>
-                `;
+                const addCell = (value) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value ?? '';
+                    tr.appendChild(cell);
+                    return cell;
+                };
+                const idCell = addCell(a.alert_id);
+                const idText = document.createElement('strong');
+                idText.textContent = a.alert_id;
+                idCell.textContent = '';
+                idCell.appendChild(idText);
+                addCell(a.raw_event.source_system);
+                addCell(a.raw_event.user);
+                addCell(a.raw_event.source_ip);
+
+                const severityCell = addCell('');
+                const severityBadge = document.createElement('span');
+                severityBadge.className = 'badge';
+                const severityClass = {
+                    'CRÍTICA': 'badge-CRÍTICA',
+                    'ALTA': 'badge-ALTA',
+                    'MEDIA': 'badge-MEDIA'
+                }[a.severity];
+                if (severityClass) severityBadge.classList.add(severityClass);
+                severityBadge.textContent = a.severity ?? '';
+                severityCell.appendChild(severityBadge);
+
+                const riskCell = addCell('');
+                const riskText = document.createElement('strong');
+                riskText.textContent = a.ml_score ? `${a.ml_score.risk_score}%` : 'N/A';
+                riskCell.appendChild(riskText);
+                addCell(a.status);
+
+                const actionsCell = addCell('');
+                actionsCell.style.cssText = 'display: flex; gap: 8px; align-items: center; flex-wrap: wrap;';
+                const investigateButton = document.createElement('button');
+                investigateButton.className = 'btn btn-ai';
+                investigateButton.textContent = 'Investigar con IA';
+                investigateButton.addEventListener('click', () => investigateAlert(a));
+                actionsCell.appendChild(investigateButton);
+
+                const mitigateButton = document.createElement('button');
+                mitigateButton.className = 'btn btn-mitigate';
+                mitigateButton.textContent = 'Bloquear IP';
+                mitigateButton.addEventListener('click', () => mitigateAlert(a.alert_id, a.raw_event.source_ip));
+                actionsCell.appendChild(mitigateButton);
+
+                if (a.feedback) {
+                    const feedbackStatus = document.createElement('span');
+                    feedbackStatus.className = 'feedback-recorded';
+                    feedbackStatus.textContent = a.feedback.label === 'VERDADERO_POSITIVO'
+                        ? 'Amenaza confirmada'
+                        : 'Falso positivo';
+                    actionsCell.appendChild(feedbackStatus);
+                } else {
+                    const truePositiveButton = document.createElement('button');
+                    truePositiveButton.className = 'btn btn-feedback-tp';
+                    truePositiveButton.textContent = 'Confirmar Amenaza (TP)';
+                    truePositiveButton.addEventListener('click', () => submitFeedback(a.alert_id, 'VERDADERO_POSITIVO'));
+
+                    const falsePositiveButton = document.createElement('button');
+                    falsePositiveButton.className = 'btn btn-feedback-fp';
+                    falsePositiveButton.textContent = 'Descartar como Falso Positivo (FP)';
+                    falsePositiveButton.addEventListener('click', () => submitFeedback(a.alert_id, 'FALSO_POSITIVO'));
+                    actionsCell.append(truePositiveButton, falsePositiveButton);
+                }
                 tbody.appendChild(tr);
             });
             document.getElementById('kpi-total').innerText = data.total;
         } catch (err) {
             console.error("Error cargando alertas:", err);
+        }
+    }
+
+    async function submitFeedback(alertId, feedback) {
+        if (!requireAuth()) return;
+
+        const label = feedback === 'VERDADERO_POSITIVO' ? 'amenaza confirmada' : 'falso positivo';
+        if (!confirm(`¿Confirmas clasificar esta alerta como ${label}?`)) return;
+
+        try {
+            const res = await fetch(`/api/alerts/${encodeURIComponent(alertId)}/feedback`, {
+                method: 'POST',
+                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ feedback })
+            });
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.detail || result.error || 'No se pudo guardar la retroalimentación.');
+            }
+            await loadAlerts();
+        } catch (err) {
+            alert(`Error al guardar la retroalimentación: ${err.message}`);
         }
     }
 
