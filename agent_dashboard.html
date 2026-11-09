@@ -569,21 +569,21 @@
 
       <div class="agent-field">
         <div class="field-title">Estado Actual</div>
-        <div class="field-content" id="planner-status">⚡ ELABORANDO PLAN MAESTRO DE IMPLEMENTACIÓN Y PRUEBAS</div>
+        <div class="field-content" id="planner-status">✅ ARQUITECTURA Y CONEXIÓN WAZUH SIEM DISEÑADA</div>
       </div>
 
       <div class="agent-field">
         <div class="field-title">Entregable / Artefacto de Salida</div>
-        <div class="field-content" id="planner-artifact">plan_maestro_implementacion_y_pruebas.md</div>
+        <div class="field-content" id="planner-artifact">wazuh_client.py, wazuh_listener.py, docker-compose parametrizado con .env</div>
       </div>
 
       <div class="progress-wrapper">
         <div class="progress-labels">
-          <span>Progreso del Plan</span>
-          <span id="planner-progress-pct">75%</span>
+          <span>Progreso de Análisis</span>
+          <span id="planner-progress-pct">100%</span>
         </div>
         <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="planner-bar" style="width: 75%;"></div>
+          <div class="progress-bar-fill" id="planner-bar" style="width: 100%;"></div>
         </div>
       </div>
     </div>
@@ -605,21 +605,21 @@
 
       <div class="agent-field">
         <div class="field-title">Estado Actual</div>
-        <div class="field-content" id="builder-status">⏳ EN ESPERA DE VALIDACIÓN DEL PLAN HITL</div>
+        <div class="field-content" id="builder-status">✅ CONSOLA EN REACT + VITE + TAILWIND COMPILADA Y OPERATIVA</div>
       </div>
 
       <div class="agent-field">
         <div class="field-title">Foco de Ejecución</div>
-        <div class="field-content" id="builder-target">Preparación de scripts de prueba, suite de ingesta y despliegue</div>
+        <div class="field-content" id="builder-target">Consola React moderna lista (Vite dev en :5173 y producción optimizada en :8000)</div>
       </div>
 
       <div class="progress-wrapper">
         <div class="progress-labels">
           <span>Progreso de Construcción</span>
-          <span id="builder-progress-pct">0%</span>
+          <span id="builder-progress-pct">100%</span>
         </div>
         <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="builder-bar" style="width: 0%;"></div>
+          <div class="progress-bar-fill" id="builder-bar" style="width: 100%;"></div>
         </div>
       </div>
     </div>
@@ -689,9 +689,9 @@
           <span class="log-msg">Generando artefacto maestro: plan_maestro_implementacion_y_pruebas.md con matriz paso a paso.</span>
         </div>
         <div class="log-line">
-          <span class="log-time">[10:29:20]</span>
+          <span class="log-time">[00:41:40]</span>
           <span class="log-src-builder">[BUILDER]</span>
-          <span class="log-msg">Creado documento técnico exhaustivo: docs/FUNCIONALIDADES_PENDIENTES_Y_GUIA_TECNICA.md cubriendo las 8 capacidades pendientes y guías paso a paso.</span>
+          <span class="log-msg">Corrección en inject_test.py: Eliminada llamada redundante a 'service filebeat' (causaba FileNotFoundError en contenedor Alpine/Debian sin systemd). Paso de reenvío HTTP hacia el API Gateway ahora se ejecuta directamente.</span>
         </div>
       </div>
     </div>
