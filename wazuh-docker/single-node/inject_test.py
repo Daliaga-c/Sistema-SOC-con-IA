@@ -69,9 +69,42 @@ if found == 0:
 else:
     print(f"  [OK] Se encontraron {found} alertas recientes en alerts.json.")
 
-print("\n=== 4. Verificando servicio Filebeat (envio al Dashboard/Indexer) ===")
-fb = subprocess.run(["service", "filebeat", "status"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-print("  ", fb.stdout.decode("utf-8", errors="replace").strip())
-if fb.returncode != 0:
-    print("  Iniciando Filebeat...")
-    subprocess.run(["service", "filebeat", "start"])
+print("\n=== 4. Reenviando alerta en vivo a la App Web SOC-IA ===")
+import urllib.request
+
+target_hosts = [
+    "http://host.docker.internal:8000/api/ingest",
+    "http://172.17.0.1:8000/api/ingest",
+    "http://soc-ia-api-gateway:8000/api/ingest",
+    "http://localhost:8000/api/ingest"
+]
+
+canonical_payload = json.dumps({
+    "user": "carlos",
+    "ip_origen": "192.168.1.50",
+    "resultado": "FAILURE",
+    "origen": "Wazuh SIEM",
+    "dispositivo": "Portal Web Dummy (Wazuh Agent)",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+}).encode("utf-8")
+
+sent = False
+last_err = None
+for url in target_hosts:
+    try:
+        req = urllib.request.Request(
+            url,
+            data=canonical_payload,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            print(f"  [✓ CONECTOR SOC-IA] Alerta de 'carlos' enviada con exito a {url} -> HTTP {resp.status}")
+            sent = True
+            break
+    except Exception as e:
+        last_err = e
+
+if not sent:
+    print(f"  [!] Aviso: No se pudo contactar el puerto 8000 del backend ({last_err}).")
+    print("      -> Verifica que los microservicios esten activos con: docker-compose up -d")
+

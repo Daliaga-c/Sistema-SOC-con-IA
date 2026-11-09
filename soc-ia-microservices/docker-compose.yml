@@ -30,6 +30,10 @@ services:
     environment:
       - ML_SERVICE_URL=http://ml-anomaly-detection:8002
       - ALERTS_SERVICE_URL=http://alerts-incidents-service:8003
+      - WAZUH_API_HOST=${WAZUH_API_HOST:-host.docker.internal}
+      - WAZUH_API_PORT=${WAZUH_API_PORT:-55000}
+      - WAZUH_API_USER=${WAZUH_API_USER:-wazuh-wui}
+      - WAZUH_API_PASSWORD=${WAZUH_API_PASSWORD:-MyS3cr37P450r.*-}
     networks:
       - soc-network
 

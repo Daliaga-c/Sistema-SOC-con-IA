@@ -27,27 +27,21 @@ ALERTS_URL = os.getenv("ALERTS_SERVICE_URL", "http://alerts-incidents-service:80
 COPILOT_URL = os.getenv("COPILOT_SERVICE_URL", "http://genai-copilot-service:8004")
 THREAT_INTEL_URL = os.getenv("THREAT_INTEL_URL", "http://threat-intelligence-service:8005")
 
-# Montaje de archivos estáticos y hojas de estilo de la consola del analista
+# Montaje de la consola del analista (Build de React en dist/)
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend" / "analyst-console"
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-    css_dir = FRONTEND_DIR / "css"
-    if css_dir.exists():
-        app.mount("/css", StaticFiles(directory=str(css_dir)), name="css")
+DIST_DIR = FRONTEND_DIR / "dist"
+
+if DIST_DIR.exists():
+    assets_dir = DIST_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
 @app.get("/")
-async def root():
-    dashboard_path = FRONTEND_DIR / "analyst_dashboard.html"
-    if dashboard_path.exists():
-        return FileResponse(str(dashboard_path))
-    return {"message": "SOC-IA API Gateway activo y operando", "docs": "/docs"}
-
 @app.get("/login")
-async def login_page():
-    login_path = FRONTEND_DIR / "analyst_login.html"
-    if login_path.exists():
-        return FileResponse(str(login_path))
-    return {"message": "Login page not found"}
+async def serve_react_app():
+    if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
+        return FileResponse(str(DIST_DIR / "index.html"))
+    return {"message": "SOC-IA API Gateway activo y operando. Ejecuta 'npm run build' en frontend/analyst-console.", "docs": "/docs"}
 
 @app.get("/health")
 async def health_check():
