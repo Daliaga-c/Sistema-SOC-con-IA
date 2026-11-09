@@ -16,16 +16,8 @@ async def chat(request: ChatRequest):
     if request.alert_context:
         result = copilot.analyze_alert(request.alert_context, request.message)
     else:
-        # Respuesta libre a consultas de seguridad y procedimientos
-        result = {
-            "reply": (
-                f"Hola {request.analyst_name}. Estoy conectado a las fuentes de Wazuh y al Feature Store de ML. "
-                "Para iniciar un análisis forense guiado, puedes seleccionar una alerta de la tabla y presionar "
-                "**'Investigar con IA'** o preguntarme sobre cualquier técnica del framework MITRE ATT&CK."
-            ),
-            "recommended_action": None,
-            "requires_human_approval": False
-        }
+        # Respuesta dinámica o consulta de ciberseguridad con Gemini y guardrails
+        result = copilot.chat_free(request.message, request.analyst_name or "Analista SOC N1")
     return result
 
 @app.get("/health")

@@ -569,12 +569,12 @@
 
       <div class="agent-field">
         <div class="field-title">Estado Actual</div>
-        <div class="field-content" id="planner-status">✅ ARQUITECTURA Y CONEXIÓN WAZUH SIEM DISEÑADA</div>
+        <div class="field-content" id="planner-status">✅ DIAGNÓSTICO MODELO ML & ACTUALIZACIÓN DE ROADMAP</div>
       </div>
 
       <div class="agent-field">
         <div class="field-title">Entregable / Artefacto de Salida</div>
-        <div class="field-content" id="planner-artifact">wazuh_client.py, wazuh_listener.py, docker-compose parametrizado con .env</div>
+        <div class="field-content" id="planner-artifact">Evaluación técnica modelo_soc.pkl (NSL-KDD) y actualización de FUNCIONALIDADES_PENDIENTES_Y_GUIA_TECNICA.md</div>
       </div>
 
       <div class="progress-wrapper">
@@ -605,21 +605,21 @@
 
       <div class="agent-field">
         <div class="field-title">Estado Actual</div>
-        <div class="field-content" id="builder-status">✅ CONSOLA EN REACT + VITE + TAILWIND COMPILADA Y OPERATIVA</div>
+        <div class="field-content" id="builder-status">✅ AGENTE GEMINI IMPLEMENTADO CON GUARDRAILS DEFENSIVOS</div>
       </div>
 
       <div class="agent-field">
         <div class="field-title">Foco de Ejecución</div>
-        <div class="field-content" id="builder-target">Consola React moderna lista (Vite dev en :5173 y producción optimizada en :8000)</div>
+        <div class="field-content" id="builder-target">agent.py con Gemini 3.8 Flash, Tool Calling, Guardrails y arquitectura PostgreSQL de ingesta</div>
       </div>
 
       <div class="progress-wrapper">
         <div class="progress-labels">
           <span>Progreso de Construcción</span>
-          <span id="builder-progress-pct">100%</span>
+          <span id="builder-progress-pct">90%</span>
         </div>
         <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="builder-bar" style="width: 100%;"></div>
+          <div class="progress-bar-fill" id="builder-bar" style="width: 90%;"></div>
         </div>
       </div>
     </div>
@@ -634,37 +634,37 @@
         <div class="task-item">
           <div class="task-left">
             <span>🔹</span>
-            <span>1. Diagnóstico de prerrequisitos, variables y modo Standalone</span>
+            <span>1. Diagnóstico de modelo_soc.pkl (Campos NSL-KDD vs Logs Wazuh)</span>
           </div>
           <span class="task-badge status-done">Completada (Planner)</span>
         </div>
         <div class="task-item">
           <div class="task-left">
             <span>🔹</span>
-            <span>2. Diseño de la Guía de Pruebas (Generador de Tráfico Dummy)</span>
+            <span>2. Implementación de IA Agéntica real en agent.py con Guardrails y Gemini</span>
+          </div>
+          <span class="task-badge status-done">Completada (Builder)</span>
+        </div>
+        <div class="task-item">
+          <div class="task-left">
+            <span>🔹</span>
+            <span>3. Diseño del buffer persistente en PostgreSQL para alertas de Wazuh</span>
           </div>
           <span class="task-badge status-running">En Proceso (Planner)</span>
         </div>
         <div class="task-item">
           <div class="task-left">
             <span>🔹</span>
-            <span>3. Hoja de Ruta Progresiva de Integración con Wazuh SIEM</span>
+            <span>4. Reentrenamiento de ML con Golden Dataset de PostgreSQL</span>
           </div>
-          <span class="task-badge status-pending">Pendiente (Planner)</span>
+          <span class="task-badge status-pending">Prioridad Alta</span>
         </div>
         <div class="task-item">
           <div class="task-left">
             <span>🔹</span>
-            <span>4. Validación Human-in-the-Loop y Aprobación del Plan</span>
+            <span>5. Integración de Threat Intel en tiempo real (AbuseIPDB & GeoIP2)</span>
           </div>
-          <span class="task-badge status-pending">HITL</span>
-        </div>
-        <div class="task-item">
-          <div class="task-left">
-            <span>🔹</span>
-            <span>5. Creación de scripts de prueba y validación integral</span>
-          </div>
-          <span class="task-badge status-pending">Pendiente (Builder)</span>
+          <span class="task-badge status-pending">Prioridad Media</span>
         </div>
       </div>
     </div>
@@ -674,24 +674,29 @@
       <h2>📜 Bitácora de Eventos (Live)</h2>
       <div class="log-box" id="log-box">
         <div class="log-line">
-          <span class="log-time">[09:59:30]</span>
-          <span class="log-src-router">[ROUTER]</span>
-          <span class="log-msg">Nueva solicitud: Desglose de requisitos, guía de pruebas y plan de acción con Wazuh en proceso de configuración.</span>
-        </div>
-        <div class="log-line">
-          <span class="log-time">[09:59:35]</span>
+          <span class="log-time">[01:14:04]</span>
           <span class="log-src-planner">[PLANNER]</span>
-          <span class="log-msg">Modelo 'Pro/Flash' activado. Diseñando estrategia desacoplada (Modo Simulado / Generador de Tráfico vs Modo Wazuh SIEM).</span>
+          <span class="log-msg">Inspección de modelo_soc.pkl completada: 41 variables canónicas de NSL-KDD detectadas. Incompatibilidad directa con eventos de login Wazuh dictaminada.</span>
         </div>
         <div class="log-line">
-          <span class="log-time">[10:00:15]</span>
-          <span class="log-src-planner">[PLANNER]</span>
-          <span class="log-msg">Generando artefacto maestro: plan_maestro_implementacion_y_pruebas.md con matriz paso a paso.</span>
-        </div>
-        <div class="log-line">
-          <span class="log-time">[00:41:40]</span>
+          <span class="log-time">[01:20:07]</span>
           <span class="log-src-builder">[BUILDER]</span>
-          <span class="log-msg">Corrección en inject_test.py: Eliminada llamada redundante a 'service filebeat' (causaba FileNotFoundError en contenedor Alpine/Debian sin systemd). Paso de reenvío HTTP hacia el API Gateway ahora se ejecuta directamente.</span>
+          <span class="log-msg">Actualizado documento maestro 'FUNCIONALIDADES_PENDIENTES_Y_GUIA_TECNICA.md' con nuevo roadmap de prioridades.</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">[01:36:58]</span>
+          <span class="log-src-builder">[BUILDER]</span>
+          <span class="log-msg">agent.py refactorizado con SDK oficial google-genai, Tool Calling, fallback seguro y matriz de Guardrails anti-jailbreak.</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">[10:54:35]</span>
+          <span class="log-src-builder">[BUILDER]</span>
+          <span class="log-msg">Actualizado contenedor soc-ia-copilot-service en caliente con agent.py corregido (respuestas contextuales por causa raíz, playbook y Gemini).</span>
+        </div>
+        <div class="log-line">
+          <span class="log-time">[18:21:12]</span>
+          <span class="log-src-builder">[BUILDER]</span>
+          <span class="log-msg">Optimizado pipeline Copilot: Modelo principal configurado a 'gemini-3.5-flash-lite' (latencia reducida a ~3.8s) y timeout del Gateway extendido a 90s. Error 503 completamente resuelto.</span>
         </div>
       </div>
     </div>

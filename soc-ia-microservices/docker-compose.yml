@@ -7,6 +7,8 @@ services:
     container_name: soc-ia-api-gateway
     ports:
       - "8000:8000"
+    volumes:
+      - ./services/api-gateway:/app
     environment:
       - INGESTION_SERVICE_URL=http://ingestion-service:8001
       - ML_SERVICE_URL=http://ml-anomaly-detection:8002
@@ -79,8 +81,10 @@ services:
     container_name: soc-ia-copilot-service
     ports:
       - "8004:8004"
-    environment:
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./services/genai-copilot-service:/app
+    env_file:
+      - .env
     networks:
       - soc-network
 
