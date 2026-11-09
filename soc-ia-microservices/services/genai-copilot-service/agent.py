@@ -1,35 +1,11 @@
 """
 SOC Copilot - Agente Conversacional Especializado en Ciberseguridad.
-Soporta RAG sobre NIST SP 800-61 y MITRE ATT&CK con capacidad de Function Calling y Human-in-the-loop.
+Soporta RAG sobre NIST SP 800-61 y MITRE ATT&CK con capa local de vector store.
 """
-from typing import Dict, Any, List
-import os
-import json
+from typing import Any, Dict, List
 
-# Base de conocimiento RAG en memoria (NIST y MITRE)
-KNOWLEDGE_BASE = {
-    "T1110": {
-        "title": "T1110 - Brute Force (Fuerza Bruta)",
-        "tactics": ["Credential Access"],
-        "description": "Los adversarios intentan obtener acceso sistemático probando combinaciones de contraseñas contra cuentas específicas o listas de usuarios comunes.",
-        "mitigation": "1. Bloquear IP de origen temporalmente en firewall/Active Response.\n2. Habilitar bloqueo temporal de cuenta tras 5 intentos fallidos.\n3. Exigir autenticación multifactor (MFA)."
-    },
-    "T1078": {
-        "title": "T1078 - Valid Accounts (Cuentas Válidas)",
-        "tactics": ["Defense Evasion", "Persistence", "Privilege Escalation", "Initial Access"],
-        "description": "El atacante utiliza credenciales legítimas de un usuario corporativo o cuenta de servicio, comúnmente fuera de horario laboral o desde geolocalizaciones anómalas.",
-        "mitigation": "1. Notificar al usuario para confirmar si reconoce la actividad.\n2. Revocar tokens de sesión activos de inmediato.\n3. Forzar cambio de contraseña preventivo."
-    },
-    "NIST_INCIDENT_LIFECYCLE": {
-        "title": "Guía de Respuesta a Incidentes NIST SP 800-61 Rev 2",
-        "phases": [
-            "1. Preparación",
-            "2. Detección y Análisis (Triaje con IA)",
-            "3. Contención, Erradicación y Recuperación (Mitigación asistida con aprobación humana)",
-            "4. Actividad Post-Incidente (Lecciones aprendidas y Active Learning)"
-        ]
-    }
-}
+from rag_store import ensure_default_index
+
 
 class SOCCopilotAgent:
     def __init__(self):
@@ -39,19 +15,47 @@ class SOCCopilotAgent:
             "y formulación de recomendaciones de contención. Mantén siempre una postura de Human-in-the-loop: "
             "nunca ejecutes acciones irreversibles de bloqueo sin solicitar la aprobación humana expresa del operador."
         )
+        self.rag_store = ensure_default_index('./chroma_db')
+
+    def _retrieve_context(self, query: str, alert_data: Dict[str, Any]) -> Dict[str, Any]:
+        if not query:
+            query = ""
+
+        event_context = alert_data.get("raw_event", {}) if isinstance(alert_data, dict) else {}
+        user = event_context.get("user", "usuario")
+        ip = event_context.get("source_ip", "IP desconocida")
+        source = event_context.get("source_system", "sistema")
+
+        query_text = f"{query} {source} {user} {ip} {alert_data.get('title', '')}"
+        matches = self.rag_store.search(query_text, limit=3)
+
+        if not matches:
+            return {
+                "title": "Guías NIST/MITRE",
+                "description": "Se recomienda revisar el ciclo de respuesta a incidentes y validar la actividad con aprobación humana.",
+                "mitigation": "1. Validar la actividad con el usuario.\n2. Revisión de sesión activa.\n3. Bloqueo controlado y documentado.",
+                "sources": [],
+            }
+
+        best = matches[0][0]
+        context = {
+            "title": best.metadata.get('technique') or best.metadata.get('source', 'Guía de referencia'),
+            "description": best.content,
+            "mitigation": "1. Aislar la cuenta o IP sospechosa.\n2. Validar la actividad con el analista.\n3. Aplicar bloqueo por Active Response con aprobación humana.",
+            "sources": [item[0].metadata for item in matches],
+        }
+        return context
 
     def analyze_alert(self, alert_data: Dict[str, Any], query: str) -> Dict[str, Any]:
-        """
-        Genera el razonamiento y respuesta estructurada para una alerta investigada.
-        """
+        """Genera el razonamiento y respuesta estructurada para una alerta investigada."""
         ip = alert_data.get("raw_event", {}).get("source_ip", "Desconocida")
         user = alert_data.get("raw_event", {}).get("user", "Desconocido")
         source = alert_data.get("raw_event", {}).get("source_system", "Web")
         risk_score = alert_data.get("ml_score", {}).get("risk_score", 50.0)
         mitre_list = alert_data.get("mitre_attack", ["T1110 - Brute Force"])
 
-        # Recuperación de RAG
-        rag_context = KNOWLEDGE_BASE.get("T1110") if "1110" in str(mitre_list) else KNOWLEDGE_BASE.get("T1078")
+        rag_context = self._retrieve_context(query or "anomalía de autenticación", alert_data)
+        technique_label = "T1110 - Brute Force" if "1110" in str(mitre_list) else "T1078 - Valid Accounts"
 
         response_text = (
             f"### 🛡️ Diagnóstico del Asistente SOC (Copilot)\n\n"
@@ -59,11 +63,11 @@ class SOCCopilotAgent:
             f"Se ha detectado una anomalía crítica en el canal **{source}** para la cuenta `{user}` desde la dirección IP `{ip}`. "
             f"El modelo de Machine Learning le ha asignado un **Score de Riesgo de {risk_score}/100** debido a patrones de comportamiento sospechosos.\n\n"
             f"**Técnica MITRE ATT&CK Mapeada:**\n"
-            f"- **{rag_context['title']}**\n"
+            f"- **{technique_label}**\n"
             f"- *Detalle Forense:* {rag_context['description']}\n\n"
             f"**Protocolo de Contención Asistida (NIST SP 800-61):**\n"
             f"{rag_context['mitigation']}\n\n"
-            f"⚠️ **Control de Gobernanza (Human-in-the-Loop):**\n"
+            f"⚠️ **Control de Gobernanza (Human-in-the-loop):**\n"
             f"¿Deseas que prepare la orden de **Active Response en Wazuh** para bloquear la IP `{ip}` por 3600 segundos?"
         )
 
@@ -72,5 +76,6 @@ class SOCCopilotAgent:
             "recommended_action": "BLOCK_IP",
             "target": ip,
             "requires_human_approval": True,
-            "mitre_details": rag_context
+            "mitre_details": rag_context,
+            "retrieved_documents": rag_context.get('sources', []),
         }
