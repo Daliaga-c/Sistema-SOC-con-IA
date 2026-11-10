@@ -56,3 +56,28 @@ export async function submitAlertFeedback(alertId, feedbackType, notes = '', ana
   }
   return await res.json();
 }
+
+
+export async function predictUserLog(logPayload) {
+  const res = await fetch(`${API_BASE}/predict/log`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(logPayload)
+  });
+  if (!res.ok) {
+    throw new Error(`Error ${res.status}: Fallo en la predicción del modelo SOC`);
+  }
+  return await res.json();
+}
+
+export async function ingestLogEvent(logEvent) {
+  const res = await fetch(`${API_BASE}/ingest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(logEvent)
+  });
+  if (!res.ok) {
+    throw new Error(`Error ${res.status}: Fallo al enviar log a ingesta`);
+  }
+  return await res.json();
+}

@@ -241,6 +241,19 @@ async def predict_anomaly(request: Request, current_user: Dict[str, Any] = Depen
             return JSONResponse(status_code=503, content={"error": "ML Service unavailable", "details": str(exc)})
 
 
+@app.post("/api/predict/log")
+async def predict_user_log(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Predice anomalías en logs de usuarios o alertas de Wazuh usando modelo_soc.pkl"""
+    del current_user
+    payload = await request.json()
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            r = await client.post(f"{ML_SERVICE_URL}/predict/log", json=payload)
+            return JSONResponse(status_code=r.status_code, content=r.json())
+        except Exception as exc:
+            return JSONResponse(status_code=503, content={"error": "ML Service unavailable", "details": str(exc)})
+
+
 # Proxy hacia microservicio de Asistente IA (Chatbot Copilot)
 @app.post("/api/chat")
 async def chat_with_copilot(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):

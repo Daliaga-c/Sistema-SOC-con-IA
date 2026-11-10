@@ -4,9 +4,10 @@ import KpiCards from './components/KpiCards';
 import AlertsTable from './components/AlertsTable';
 import CopilotChat from './components/CopilotChat';
 import MitigationModal from './components/MitigationModal';
+import LogPredictorModal from './components/LogPredictorModal';
 import Login from './components/Login';
 import { fetchAlerts, sendCopilotMessage, executeMitigation, submitAlertFeedback } from './services/api';
-import { RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Sparkles, CheckCircle2, Brain } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -33,6 +34,7 @@ export default function App() {
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [mitigationAlert, setMitigationAlert] = useState(null);
   const [isMitigationOpen, setIsMitigationOpen] = useState(false);
+  const [isPredictorOpen, setIsPredictorOpen] = useState(false);
   const [isExecutingMitigation, setIsExecutingMitigation] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -254,10 +256,18 @@ export default function App() {
               <span>Actualizar Alertas</span>
             </button>
             <button
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]"
+              onClick={() => setIsPredictorOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.02]"
+              title="Analizador y predictor de logs en vivo con modelo_soc.pkl"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Brain className="w-3.5 h-3.5" />
+              <span>Predecir Logs (modelo_soc)</span>
+            </button>
+            <button
+              onClick={() => setIsChatOpen(!isChatOpen)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
               <span>Abrir Copilot</span>
             </button>
           </div>
@@ -287,13 +297,26 @@ export default function App() {
         isSending={isSendingChat}
       />
 
-      {/* Human-in-the-Loop Mitigation Modal */}
+            {/* Human-in-the-Loop Mitigation Modal */}
       <MitigationModal
         isOpen={isMitigationOpen}
         onClose={() => setIsMitigationOpen(false)}
         alert={mitigationAlert}
         onConfirm={handleConfirmMitigation}
         isExecuting={isExecutingMitigation}
+      />
+
+      {/* Log Predictor Modal with modelo_soc.pkl */}
+      <LogPredictorModal
+        isOpen={isPredictorOpen}
+        onClose={() => setIsPredictorOpen(false)}
+        onEscalateToAlert={(alertPayload, predResult) => {
+          showToast(`🚨 Alerta escalada al SOC para el usuario "${alertPayload.user}" (Score: ${predResult.risk_score}%)`);
+          loadAlerts();
+        }}
+        onInvestigateInCopilot={(simulatedAlert) => {
+          handleInvestigate(simulatedAlert);
+        }}
       />
 
       {/* Toast Notification */}
