@@ -2,18 +2,27 @@
 SOC Copilot - Agente Conversacional Especializado en Ciberseguridad.
 Soporta RAG sobre NIST SP 800-61 y MITRE ATT&CK con capa local de vector store.
 """
-from typing import Any, Dict, List
+import json
+import os
+from typing import Any, Dict
+
+import httpx
 
 from rag_store import ensure_default_index
 
 
 class SOCCopilotAgent:
     def __init__(self):
+        self.ollama_base_url = os.getenv(
+            "OLLAMA_BASE_URL", "http://host.docker.internal:11434"
+        ).rstrip("/")
+        self.ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
         self.system_prompt = (
             "Eres el Asistente Senior de Ciberseguridad (SOC Copilot) de la organización. "
             "Tu objetivo es ayudar al analista en el triaje rápido, explicación de alertas con base en MITRE ATT&CK / NIST "
             "y formulación de recomendaciones de contención. Mantén siempre una postura de Human-in-the-loop: "
-            "nunca ejecutes acciones irreversibles de bloqueo sin solicitar la aprobación humana expresa del operador."
+            "nunca ejecutes acciones irreversibles de bloqueo sin solicitar la aprobación humana expresa del operador. "
+            "Usa el contexto NIST/MITRE proporcionado, distingue hechos de hipótesis y responde en español."
         )
         self.rag_store = ensure_default_index('./chroma_db')
 
@@ -46,36 +55,76 @@ class SOCCopilotAgent:
         }
         return context
 
-    def analyze_alert(self, alert_data: Dict[str, Any], query: str) -> Dict[str, Any]:
-        """Genera el razonamiento y respuesta estructurada para una alerta investigada."""
-        ip = alert_data.get("raw_event", {}).get("source_ip", "Desconocida")
-        user = alert_data.get("raw_event", {}).get("user", "Desconocido")
-        source = alert_data.get("raw_event", {}).get("source_system", "Web")
-        risk_score = alert_data.get("ml_score", {}).get("risk_score", 50.0)
-        mitre_list = alert_data.get("mitre_attack", ["T1110 - Brute Force"])
+    async def _ask_ollama(self, query: str, prompt_context: Dict[str, Any]) -> str:
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            response = await client.post(
+                f"{self.ollama_base_url}/api/chat",
+                json={
+                    "model": self.ollama_model,
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {
+                            "role": "user",
+                            "content": (
+                                f"Pregunta del analista: {query}\n\n"
+                                f"Contexto RAG NIST/MITRE y alerta (JSON): "
+                                f"{json.dumps(prompt_context, ensure_ascii=False, default=str)}"
+                            ),
+                        },
+                    ],
+                    "stream": False,
+                },
+            )
+            response.raise_for_status()
 
-        rag_context = self._retrieve_context(query or "anomalía de autenticación", alert_data)
-        technique_label = "T1110 - Brute Force" if "1110" in str(mitre_list) else "T1078 - Valid Accounts"
+        payload = response.json()
+        if not isinstance(payload, dict):
+            raise ValueError("Ollama devolvió una respuesta con formato inválido.")
+        message = payload.get("message")
+        reply = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(reply, str) or not reply.strip():
+            raise ValueError("Ollama devolvió una respuesta vacía o con formato inválido.")
+        return reply.strip()
 
-        response_text = (
-            f"### 🛡️ Diagnóstico del Asistente SOC (Copilot)\n\n"
-            f"**Resumen de Investigación:**\n"
-            f"Se ha detectado una anomalía crítica en el canal **{source}** para la cuenta `{user}` desde la dirección IP `{ip}`. "
-            f"El modelo de Machine Learning le ha asignado un **Score de Riesgo de {risk_score}/100** debido a patrones de comportamiento sospechosos.\n\n"
-            f"**Técnica MITRE ATT&CK Mapeada:**\n"
-            f"- **{technique_label}**\n"
-            f"- *Detalle Forense:* {rag_context['description']}\n\n"
-            f"**Protocolo de Contención Asistida (NIST SP 800-61):**\n"
-            f"{rag_context['mitigation']}\n\n"
-            f"⚠️ **Control de Gobernanza (Human-in-the-loop):**\n"
-            f"¿Deseas que prepare la orden de **Active Response en Wazuh** para bloquear la IP `{ip}` por 3600 segundos?"
-        )
-
-        return {
-            "reply": response_text,
-            "recommended_action": "BLOCK_IP",
-            "target": ip,
-            "requires_human_approval": True,
-            "mitre_details": rag_context,
-            "retrieved_documents": rag_context.get('sources', []),
+    async def respond(
+        self,
+        query: str,
+        alert_data: Dict[str, Any] | None = None,
+        analyst_name: str = "Analista SOC N1",
+    ) -> Dict[str, Any]:
+        """Responde al analista con Ollama y el contexto relevante del RAG."""
+        alert_data = alert_data or {}
+        rag_context = self._retrieve_context(query, alert_data)
+        prompt_context = {
+            "analista": analyst_name,
+            "alerta": alert_data or None,
+            "referencias": rag_context,
         }
+        reply = await self._ask_ollama(query, prompt_context)
+
+        result = {
+            "reply": reply,
+            "recommended_action": None,
+            "requires_human_approval": False,
+            "mitre_details": rag_context,
+            "retrieved_documents": rag_context.get("sources", []),
+        }
+
+        if alert_data:
+            raw_event = alert_data.get("raw_event")
+            ip = (
+                raw_event.get("source_ip", "Desconocida")
+                if isinstance(raw_event, dict)
+                else "Desconocida"
+            )
+            result.update({
+                "recommended_action": "BLOCK_IP",
+                "target": ip,
+                "requires_human_approval": True,
+            })
+
+        return result
+
+    async def analyze_alert(self, alert_data: Dict[str, Any], query: str) -> Dict[str, Any]:
+        """Mantiene la interfaz de análisis de alertas para los consumidores existentes."""
+        return await self.respond(query, alert_data)
