@@ -3,8 +3,9 @@ from pydantic import BaseModel
 from typing import Dict, Any, Optional
 from model import AnomalyDetector
 from soc_model_adapter import SOCModelAdapter
+from retrain_feedback import load_active_learning_state, process_feedback_and_retrain
 
-app = FastAPI(title="SOC-IA ML Anomaly Detection Service", version="2.0.0")
+app = FastAPI(title="SOC-IA ML Anomaly Detection Service", version="2.1.0")
 
 auth_detector = AnomalyDetector()
 soc_detector = SOCModelAdapter()
@@ -27,7 +28,6 @@ async def predict_risk(event: EventPayload):
     if model_choice == "auth_rf":
         result = auth_detector.predict(event_dict)
     else:
-        # Por defecto usar el modelo_soc.pkl adaptado
         result = soc_detector.predict(event_dict)
 
     return {
@@ -56,8 +56,26 @@ async def predict_soc_model(request: Request):
     result = soc_detector.predict(payload if isinstance(payload, dict) else {})
     return result
 
+@app.post("/retrain")
+async def retrain_active_learning(request: Request):
+    """
+    Endpoint del Bucle de Active Learning: recibe retroalimentación (TP/FP) desde PostgreSQL,
+    recalibra el umbral y reentrena los estimadores de Random Forest.
+    """
+    payload = await request.json()
+    result = process_feedback_and_retrain(payload if isinstance(payload, dict) else {})
+    # Recargar modelo en memoria tras reentrenamiento
+    auth_detector.model = None
+    auth_detector._ensure_model_loaded()
+    return result
+
+@app.get("/active-learning/status")
+async def active_learning_status():
+    return load_active_learning_state()
+
 @app.get("/health")
 async def health():
+    al_state = load_active_learning_state()
     return {
         "status": "UP",
         "service": "ml-anomaly-detection",
@@ -66,7 +84,9 @@ async def health():
             "modelo_soc": {
                 "version": soc_detector.version,
                 "loaded": soc_detector.model is not None,
-                "features_expected": 41
+                "features_expected": 41,
+                "dynamic_threshold": al_state.get("threshold_soc_model", 50.0),
+                "active_learning_samples": al_state.get("total_feedback_samples", 0)
             }
         }
     }

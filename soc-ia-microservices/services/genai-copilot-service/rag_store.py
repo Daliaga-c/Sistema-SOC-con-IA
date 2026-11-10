@@ -1,6 +1,15 @@
+"""Almacén Vectorial Local y Base de Conocimiento RAG para el SOC Copilot.
+
+Provee almacenamiento de embeddings deterministas, indexación de playbooks y guías
+NIST / MITRE ATT&CK tanto estáticos como cargados dinámicamente desde el corpus Markdown.
+"""
+
+from __future__ import annotations
+
 import hashlib
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
@@ -21,9 +30,8 @@ class RAGDocument:
 class LocalVectorStore:
     """Vector store local con embeddings deterministas para trabajar sin modelo externo.
 
-    Esta implementación se aleja del enfoque totalmente semántico de Gemini + ChromaDB,
-    pero mantiene la disciplina operativa del RAG: indexación, recuperación por similitud
-    y soporte local para pruebas sin depender de un acceso externo.
+    Mantiene la disciplina operativa del RAG: indexación, recuperación por similitud
+    y soporte local para pruebas y ejecución autónoma.
     """
 
     def __init__(self, vector_size: int = 256, persist_directory: str | None = None):
@@ -75,6 +83,15 @@ class LocalVectorStore:
             self.vectors.append(self._embed_text(doc.content))
         self._persist_to_disk()
 
+    def rebuild(self, documents: Iterable[RAGDocument]) -> None:
+        """Limpia la base y re-indexa completamente los documentos dados."""
+        self.documents = []
+        self.vectors = []
+        for doc in documents:
+            self.documents.append(doc)
+            self.vectors.append(self._embed_text(doc.content))
+        self._persist_to_disk()
+
     def search(self, query: str, limit: int = 3) -> List[Tuple[RAGDocument, float]]:
         query_vector = self._embed_text(query)
         scores = []
@@ -108,6 +125,8 @@ class LocalVectorStore:
         except (json.JSONDecodeError, OSError):
             return
 
+        self.documents = []
+        self.vectors = []
         for item in payload.get('documents', []):
             doc = RAGDocument(
                 id=str(item.get('id', 'doc')),
@@ -118,8 +137,94 @@ class LocalVectorStore:
             self.vectors.append(self._embed_text(doc.content))
 
 
-def build_default_knowledge() -> List[RAGDocument]:
-    docs = [
+def find_corpus_dir(custom_path: str | Path | None = None) -> Path | None:
+    """Resuelve la ruta absoluta del directorio de corpus."""
+    if custom_path:
+        p = Path(custom_path)
+        if p.is_dir():
+            return p
+    candidates = [
+        Path(__file__).resolve().parent / "corpus",
+        Path.cwd() / "soc-ia-microservices" / "services" / "genai-copilot-service" / "corpus",
+        Path.cwd() / "corpus",
+        Path(r"c:\Users\diego\Documents\Documentos\Inteligencia Artificial\soc-ia-microservices\services\genai-copilot-service\corpus"),
+    ]
+    for c in candidates:
+        if c.is_dir():
+            return c
+    return None
+
+
+def load_corpus_documents(corpus_dir: str | Path | None = None) -> List[RAGDocument]:
+    """Carga y particiona en secciones semánticas todos los archivos Markdown del corpus."""
+    target_dir = find_corpus_dir(corpus_dir)
+    if not target_dir:
+        return []
+
+    docs: List[RAGDocument] = []
+    technique_pattern = re.compile(r'\b(T\d{4}(?:\.\d{3})?)\b')
+
+    for md_file in sorted(target_dir.glob("*.md")):
+        try:
+            text = md_file.read_text(encoding="utf-8")
+        except Exception:
+            continue
+
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        doc_title = lines[0].lstrip("#").strip() if lines else md_file.stem
+
+        # Dividir por encabezados de sección de segundo nivel (##)
+        sections = re.split(r'\n(?=##\s+)', text)
+        for idx, section in enumerate(sections):
+            sec_clean = section.strip()
+            if not sec_clean:
+                continue
+
+            sec_lines = [l.strip() for l in sec_clean.splitlines() if l.strip()]
+            sec_header = sec_lines[0].lstrip("#").strip() if sec_lines else f"Sección {idx}"
+
+            # Omitir sección cero si únicamente contiene el título del documento
+            if idx == 0 and len(sec_lines) <= 2 and sec_lines[0].startswith("# "):
+                continue
+
+            # Determinación de fuente
+            lower_name = md_file.name.lower()
+            if "nist" in lower_name:
+                source = "NIST"
+            elif "mitre" in lower_name:
+                source = "MITRE"
+            elif "playbook" in lower_name or "wazuh" in lower_name:
+                source = "SOC_PLAYBOOK"
+            else:
+                source = "SOC"
+
+            # Detección de técnicas MITRE
+            tech_matches = technique_pattern.findall(sec_clean)
+            technique = ", ".join(sorted(list(set(tech_matches)))) if tech_matches else ""
+
+            clean_stem = re.sub(r'[^a-zA-Z0-9_-]', '_', md_file.stem)
+            doc_id = f"{clean_stem}-s{idx}"
+
+            # Contenido enriquecido con metacontexto del documento
+            enriched_content = f"[{doc_title}] - {sec_header}\n\n{sec_clean}"
+
+            metadata = {
+                "source": source,
+                "filename": md_file.name,
+                "section": sec_header,
+                "document_title": doc_title,
+            }
+            if technique:
+                metadata["technique"] = technique
+
+            docs.append(RAGDocument(id=doc_id, content=enriched_content, metadata=metadata))
+
+    return docs
+
+
+def build_default_knowledge(corpus_dir: str | Path | None = None) -> List[RAGDocument]:
+    """Compila la base de conocimiento completa: documentos nucleares base + corpus Markdown."""
+    base_docs = [
         RAGDocument(
             id='nist-incident-handling',
             content=(
@@ -127,7 +232,7 @@ def build_default_knowledge() -> List[RAGDocument]:
                 'Cuando hay uso indebido de credenciales, priorizar confirmación del usuario, aislar la cuenta, '
                 'revisar sesiones activas y bloquear fuentes sospechosas con aprobación humana.'
             ),
-            metadata={'source': 'NIST', 'theme': 'incident_response'}
+            metadata={'source': 'NIST', 'theme': 'incident_response', 'document_title': 'NIST SP 800-61 Incident Handling'}
         ),
         RAGDocument(
             id='mitre-t1110',
@@ -136,7 +241,7 @@ def build_default_knowledge() -> List[RAGDocument]:
                 'de usuario y contraseña. Recomendado bloquear IP, activar MFA, limitar intentos y revisar logs de '
                 'autenticación para detectar patrones de fuerza bruta.'
             ),
-            metadata={'source': 'MITRE', 'technique': 'T1110'}
+            metadata={'source': 'MITRE', 'technique': 'T1110', 'document_title': 'MITRE ATT&CK T1110'}
         ),
         RAGDocument(
             id='mitre-t1078',
@@ -145,7 +250,7 @@ def build_default_knowledge() -> List[RAGDocument]:
                 'horarios inusuales o IPs no habituales. Se recomienda revisar sesión, revocar tokens, cambiar '
                 'contraseñas y validar si la actividad corresponde a un usuario real.'
             ),
-            metadata={'source': 'MITRE', 'technique': 'T1078'}
+            metadata={'source': 'MITRE', 'technique': 'T1078', 'document_title': 'MITRE ATT&CK T1078'}
         ),
         RAGDocument(
             id='soc-hardening',
@@ -153,14 +258,18 @@ def build_default_knowledge() -> List[RAGDocument]:
                 'Hardening SOC: aplicar MFA obligatorio, controles de sesión, monitorización de IPs anómalas, '
                 'alertas sobre accesos en horas extrañas y orden de contención con sign-off humano.'
             ),
-            metadata={'source': 'SOC', 'theme': 'hardening'}
+            metadata={'source': 'SOC', 'theme': 'hardening', 'document_title': 'SOC Hardening Guidelines'}
         ),
     ]
-    return docs
+
+    corpus_docs = load_corpus_documents(corpus_dir)
+    return base_docs + corpus_docs
 
 
-def ensure_default_index(persist_directory: str | None = None) -> LocalVectorStore:
+def ensure_default_index(persist_directory: str | None = None, force_rebuild: bool = False) -> LocalVectorStore:
+    """Garantiza la existencia e integridad de la base vectorial con el corpus enriquecido."""
     store = LocalVectorStore(persist_directory=persist_directory)
-    if not store.documents:
-        store.add_documents(build_default_knowledge())
+    # Si la base está vacía, se solicita reconstrucción, o tiene menos de 8 documentos (índice legacy)
+    if force_rebuild or len(store.documents) < 8:
+        store.rebuild(build_default_knowledge())
     return store

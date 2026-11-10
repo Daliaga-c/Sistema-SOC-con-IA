@@ -1,0 +1,401 @@
+{
+  "threshold_soc_model": 52.0,
+  "threshold_auth_rf": 65.0,
+  "total_feedback_samples": 29,
+  "true_positives_count": 18,
+  "false_positives_count": 11,
+  "trusted_ips": [
+    "190.236.14.82",
+    "45.142.122.9"
+  ],
+  "confirmed_malicious_ips": [
+    "185.220.101.5",
+    "194.26.29.112"
+  ],
+  "trusted_users_on_ip": {
+    "daliaga@190.236.14.82": 1,
+    "root@45.142.122.9": 7,
+    "root@194.26.29.112": 2,
+    "Administrator@45.142.122.9": 1
+  },
+  "feedback_history": [
+    {
+      "alert_id": "ALT-10024",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        3.0,
+        1.0,
+        1.0,
+        1.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T04:50:49.390945+00:00"
+    },
+    {
+      "alert_id": "ALT-10023",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        14.0,
+        1.0,
+        1.0,
+        2.0,
+        443.0
+      ],
+      "timestamp": "2026-11-10T05:20:03.712482+00:00"
+    },
+    {
+      "alert_id": "ALT-10023",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        14.0,
+        1.0,
+        1.0,
+        2.0,
+        443.0
+      ],
+      "timestamp": "2026-11-10T05:20:04.766685+00:00"
+    },
+    {
+      "alert_id": "ALT-10024",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        3.0,
+        1.0,
+        1.0,
+        1.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:05.792304+00:00"
+    },
+    {
+      "alert_id": "ALT-10024",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        3.0,
+        0.0,
+        1.0,
+        1.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:06.942946+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:08.048988+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:09.232867+00:00"
+    },
+    {
+      "alert_id": "ALT-E2167A4A",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        1.0,
+        0.0,
+        1.0,
+        2.0,
+        443.0
+      ],
+      "timestamp": "2026-11-10T05:20:10.323266+00:00"
+    },
+    {
+      "alert_id": "ALT-E2167A4A",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        8.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:11.326613+00:00"
+    },
+    {
+      "alert_id": "ALT-E2167A4A",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        1.0,
+        0.0,
+        1.0,
+        2.0,
+        443.0
+      ],
+      "timestamp": "2026-11-10T05:20:12.374948+00:00"
+    },
+    {
+      "alert_id": "ALT-E2167A4A",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        8.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:13.371897+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:14.375245+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:15.433014+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:16.597003+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:17.632950+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:18.670023+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:19.651770+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:20.633251+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        9.0,
+        0.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:21.688864+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:22.643321+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:23.591632+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:24.572280+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:25.556737+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:26.653150+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:27.623583+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:28.647253+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:29.638285+00:00"
+    },
+    {
+      "alert_id": "ALT-10025",
+      "label": 1,
+      "label_name": "VERDADERO_POSITIVO",
+      "features": [
+        9.0,
+        1.0,
+        1.0,
+        2.0,
+        22.0
+      ],
+      "timestamp": "2026-11-10T05:20:30.744986+00:00"
+    },
+    {
+      "alert_id": "ALT-13C9B6F8",
+      "label": 0,
+      "label_name": "FALSO_POSITIVO",
+      "features": [
+        1.0,
+        0.0,
+        1.0,
+        2.0,
+        443.0
+      ],
+      "timestamp": "2026-11-10T06:34:57.864953+00:00"
+    }
+  ],
+  "last_retrained_at": "2026-11-10T06:34:58.756622+00:00"
+}
