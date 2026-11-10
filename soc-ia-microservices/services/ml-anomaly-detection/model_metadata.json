@@ -1,0 +1,14 @@
+{
+  "version": "2.1.29-active-learning",
+  "feature_names": [
+    "failed_attempts_last_5min",
+    "is_night",
+    "is_foreign_ip",
+    "user_privilege_level",
+    "port"
+  ],
+  "training_accuracy": 1.0,
+  "active_learning_samples": 29,
+  "threshold_soc_model": 52.0,
+  "created_at": "2026-11-10T06:34:58.756622+00:00"
+}

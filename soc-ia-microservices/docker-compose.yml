@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+    container_name: soc-ia-api-gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/api-gateway:/app
+    environment:
+      - INGESTION_SERVICE_URL=http://ingestion-service:8001
+      - ML_SERVICE_URL=http://ml-anomaly-detection:8002
+      - ALERTS_SERVICE_URL=http://alerts-incidents-service:8003
+      - COPILOT_SERVICE_URL=http://genai-copilot-service:8004
+      - THREAT_INTEL_URL=http://threat-intelligence-service:8005
+    depends_on:
+      - ingestion-service
+      - ml-anomaly-detection
+      - alerts-incidents-service
+      - genai-copilot-service
+    networks:
+      - soc-network
+
+  ingestion-service:
+    build:
+      context: ./services/ingestion-service
+    container_name: soc-ia-ingestion
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./services/ingestion-service:/app
+    environment:
+      - ML_SERVICE_URL=http://ml-anomaly-detection:8002
+      - ALERTS_SERVICE_URL=http://alerts-incidents-service:8003
+      - WAZUH_API_HOST=host.docker.internal
+      - WAZUH_API_PORT=55000
+      - WAZUH_API_USER=wazuh-wui
+      - WAZUH_API_PASSWORD=MyS3cr37P450r.*-
+      - WAZUH_INDEXER_HOST=host.docker.internal
+      - WAZUH_INDEXER_PORT=9200
+      - WAZUH_INDEXER_USER=admin
+      - WAZUH_INDEXER_PASSWORD=SecretPassword
+      - ENABLE_WAZUH_AUTO_LISTENER=false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - soc-network
+
+  ml-anomaly-detection:
+    build:
+      context: ./services/ml-anomaly-detection
+    container_name: soc-ia-ml-service
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./services/ml-anomaly-detection:/app
+    networks:
+      - soc-network
+
+  alerts-incidents-service:
+    build:
+      context: ./services/alerts-incidents-service
+    container_name: soc-ia-alerts-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./services/alerts-incidents-service:/app
+    environment:
+      - DATABASE_URL=postgresql+psycopg://soc_admin:soc_secure_password@postgres-db:5432/soc_incidents
+      - ML_SERVICE_URL=http://ml-anomaly-detection:8002
+      - ENABLE_WAZUH_ACTIVE_RESPONSE=true
+      - WAZUH_API_HOST=host.docker.internal
+      - WAZUH_API_PORT=55000
+      - WAZUH_API_USER=wazuh-wui
+      - WAZUH_API_PASSWORD=MyS3cr37P450r.*-
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - postgres-db
+    networks:
+      - soc-network
+
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: soc-ia-postgres
+    environment:
+      POSTGRES_USER: soc_admin
+      POSTGRES_PASSWORD: soc_secure_password
+      POSTGRES_DB: soc_incidents
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./services/alerts-incidents-service/init_postgres.sql:/docker-entrypoint-initdb.d/init_postgres.sql:ro
+    networks:
+      - soc-network
+
+  genai-copilot-service:
+    build:
+      context: ./services/genai-copilot-service
+    container_name: soc-ia-copilot-service
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./services/genai-copilot-service:/app
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=qwen2.5:1.5b
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - soc-network
+
+  threat-intelligence-service:
+    build:
+      context: ./services/threat-intelligence-service
+    container_name: soc-ia-threat-intel
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./services/threat-intelligence-service:/app
+    env_file:
+      - .env
+    networks:
+      - soc-network
+
+  redis-broker:
+    image: redis:7-alpine
+    container_name: soc-ia-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - soc-network
+
+volumes:
+  pgdata:
+  mlmodeldata:
+
+networks:
+  soc-network:
+    driver: bridge
