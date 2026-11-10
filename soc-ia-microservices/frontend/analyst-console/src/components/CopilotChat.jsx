@@ -45,7 +45,7 @@ export default function CopilotChat({
                 RAG + NIST
               </span>
             </h3>
-            <span className="text-[11px] text-emerald-400 font-medium">● En línea (Gemini 2.0)</span>
+            <span className="text-[11px] text-emerald-400 font-medium">● En línea (Ollama · qwen2.5:3b)</span>
           </div>
         </div>
         <button

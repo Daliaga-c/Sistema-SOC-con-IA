@@ -1,3 +1,4 @@
+import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
@@ -13,20 +14,23 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    if request.alert_context:
-        result = copilot.analyze_alert(request.alert_context, request.message)
-    else:
-        # Respuesta libre a consultas de seguridad y procedimientos
-        result = {
-            "reply": (
-                f"Hola {request.analyst_name}. Estoy conectado a las fuentes de Wazuh y al Feature Store de ML. "
-                "Para iniciar un análisis forense guiado, puedes seleccionar una alerta de la tabla y presionar "
-                "**'Investigar con IA'** o preguntarme sobre cualquier técnica del framework MITRE ATT&CK."
-            ),
-            "recommended_action": None,
-            "requires_human_approval": False
-        }
-    return result
+    try:
+        return await copilot.respond(
+            request.message,
+            request.alert_context,
+            request.analyst_name or "Analista SOC N1",
+        )
+    except httpx.TimeoutException as exc:
+        raise HTTPException(status_code=504, detail="Ollama no respondió dentro del tiempo esperado.") from exc
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Ollama respondió con estado HTTP {exc.response.status_code}.",
+        ) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail="No fue posible conectar con Ollama.") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 @app.get("/health")
 async def health():
