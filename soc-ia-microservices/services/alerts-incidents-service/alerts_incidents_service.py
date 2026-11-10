@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -801,12 +801,13 @@ async def submit_feedback(alert_id: str, req: FeedbackRequest, db: Session = Dep
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
 
+    recorded_at = datetime.now(timezone.utc)
     alert.status = "CERRADA_TP" if req.feedback == "VERDADERO_POSITIVO" else "CERRADA_FP"
-    alert.feedback = {
+    feedback_payload = {
         "label": req.feedback,
         "analyst": req.analyst_name,
         "notes": req.notes,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": recorded_at.isoformat(),
     }
 
     raw_evt = alert.raw_event if isinstance(alert.raw_event, dict) else {}

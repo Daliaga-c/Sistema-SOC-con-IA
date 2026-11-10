@@ -7,7 +7,6 @@ Arquitectura Dual-LLM:
      - Fase Diagnóstico ("¿A qué se debe?" / "¿Es Falso Positivo?"): Explica la causa técnica y evalúa si es FP o TP sin forzar botones estáticos de bloqueo.
      - Fase Solución ("¿Cómo lo soluciono?" / "Mitigar"): Entrega los pasos de remediación NIST SP 800-61 y habilita la acción de mitigación HITL cuando corresponde.
 """
-
 from __future__ import annotations
 
 import os
@@ -465,3 +464,14 @@ class SOCCopilotAgent:
             "recommended_action": None,
             "requires_human_approval": False,
         }
+
+    async def respond(
+        self,
+        query: str,
+        alert_data: Optional[Dict[str, Any]] = None,
+        analyst_name: str = "Analista SOC N1",
+    ) -> Dict[str, Any]:
+        """Mantiene una interfaz asíncrona para consumidores del servicio HTTP."""
+        if alert_data:
+            return self.analyze_alert(alert_data, query)
+        return self.chat_free(query, analyst_name)

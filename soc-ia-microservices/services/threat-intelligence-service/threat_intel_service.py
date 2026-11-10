@@ -256,6 +256,38 @@ async def get_batch_reputation(req: BatchIPRequest):
     return {"total": len(results), "results": results}
 
 
+    if not address.is_global:
+        result["sources"] = {"abuseipdb": "not_public", "geoip2": "not_public"}
+        return result
+
+    geoip = await asyncio.to_thread(_lookup_geoip, address)
+    abuse = await _lookup_abuseipdb(address)
+    result["sources"] = {"abuseipdb": abuse["status"], "geoip2": geoip["status"]}
+
+    for field in ("country", "country_code", "isp"):
+        result[field] = abuse.get(field) or geoip.get(field)
+    result["city"] = geoip.get("city")
+    result["latitude"] = geoip.get("latitude")
+    result["longitude"] = geoip.get("longitude")
+    result["abuse_score"] = abuse.get("abuse_confidence_score")
+    result["abuse_confidence_score"] = abuse.get("abuse_confidence_score")
+    result["total_reports"] = abuse.get("total_reports")
+    result["last_reported_at"] = abuse.get("last_reported_at")
+    result["is_tor"] = abuse.get("is_tor", False)
+    result["is_tor_or_proxy"] = result["is_tor"] or geoip.get("is_anonymous_proxy", False)
+
+    async with CACHE_LOCK:
+        cache_time = asyncio.get_running_loop().time()
+        expired_keys = [key for key, (expires_at, _) in CACHE.items() if expires_at <= cache_time]
+        for key in expired_keys:
+            CACHE.pop(key, None)
+        if len(CACHE) >= MAX_CACHE_ENTRIES:
+            oldest_key = min(CACHE, key=lambda key: CACHE[key][0])
+            CACHE.pop(oldest_key)
+        CACHE[normalized_ip] = (cache_time + CACHE_TTL_SECONDS, result)
+    return result
+
+
 @app.get("/health")
 async def health():
     return {

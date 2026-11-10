@@ -96,6 +96,18 @@ class AlertRecord(Base):
     feedback = Column(JSONB, nullable=True)
 
 
+class FeedbackRecord(Base):
+    __tablename__ = "feedback_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    alert_id = Column(String(64), ForeignKey("alerts.alert_id"), unique=True, nullable=False, index=True)
+    label = Column(String(32), nullable=False)
+    analyst_name = Column(String(255), nullable=False)
+    notes = Column(String, nullable=True)
+    raw_event = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class AuditLog(Base):
     """Bitácora forense inmutable de aprobaciones Human-in-the-Loop, RBAC y Wazuh Active Response."""
     __tablename__ = "audit_logs"

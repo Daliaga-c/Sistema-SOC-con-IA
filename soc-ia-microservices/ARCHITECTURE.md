@@ -37,7 +37,7 @@ Este documento formaliza la arquitectura de software del proyecto **SOC-IA**, di
   * El Copilot formula la recomendación y la orden técnica, pero exige la **confirmación y firma humana explícita (*sign-off*)** del Analista N2 o Administrador antes de despachar el comando a Wazuh Active Response.
 * **Métricas de Éxito e Impacto:**
   1. Reducción > 70% en el tiempo de triaje de alertas de login.
-  2. Tasa de falsos positivos inferior al 10% mediante retroalimentación activa (*Active Learning*).
+  2. Objetivo de falsos positivos inferior al 10% en validación mediante retroalimentación activa (*Active Learning*); no garantiza el rendimiento futuro.
   3. Trazabilidad forense del 100% de las mitigaciones aplicadas con responsable humano asociado.
 
 ---

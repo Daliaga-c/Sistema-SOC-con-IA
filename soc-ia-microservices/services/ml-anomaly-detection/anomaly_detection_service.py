@@ -1,6 +1,11 @@
-from fastapi import FastAPI, Request
+import hmac
+import os
+
+from typing import Any, Dict, List, Literal, Optional
+
+from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+
 from model import AnomalyDetector
 from soc_model_adapter import SOCModelAdapter
 from retrain_feedback import load_active_learning_state, process_feedback_and_retrain
@@ -9,6 +14,7 @@ app = FastAPI(title="SOC-IA ML Anomaly Detection Service", version="2.1.0")
 
 auth_detector = AnomalyDetector()
 soc_detector = SOCModelAdapter()
+ACTIVE_LEARNING_TOKEN = os.getenv("ACTIVE_LEARNING_TOKEN", "")
 
 class EventPayload(BaseModel):
     event_id: Optional[str] = "EVT-TEST"
@@ -19,6 +25,17 @@ class EventPayload(BaseModel):
     status: Optional[str] = "FAILURE"
     metadata: Optional[Dict[str, Any]] = None
     model_engine: Optional[str] = "soc_model_kdd" # "soc_model_kdd" o "auth_rf"
+
+
+class FeedbackTrainingRecord(BaseModel):
+    alert_id: str
+    label: Literal["VERDADERO_POSITIVO", "FALSO_POSITIVO"]
+    event: Dict[str, Any]
+
+
+class RetrainingRequest(BaseModel):
+    records: List[FeedbackTrainingRecord]
+
 
 @app.post("/predict")
 async def predict_risk(event: EventPayload):
@@ -88,7 +105,10 @@ async def health():
                 "dynamic_threshold": al_state.get("threshold_soc_model", 50.0),
                 "active_learning_samples": al_state.get("total_feedback_samples", 0)
             }
-        }
+        },
+        "version": auth_detector.version,
+        "threshold": auth_detector.threshold,
+        "active_learning_enabled": bool(ACTIVE_LEARNING_TOKEN),
     }
 
 if __name__ == "__main__":
