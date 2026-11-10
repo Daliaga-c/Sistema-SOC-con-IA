@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0-trained",
+  "version": "2.1.29-active-learning",
   "feature_names": [
     "failed_attempts_last_5min",
     "is_night",
@@ -8,5 +8,7 @@
     "port"
   ],
   "training_accuracy": 1.0,
-  "created_at": "2026-11-08T06:28:11.564725+00:00"
+  "active_learning_samples": 29,
+  "threshold_soc_model": 52.0,
+  "created_at": "2026-11-10T06:34:58.756622+00:00"
 }

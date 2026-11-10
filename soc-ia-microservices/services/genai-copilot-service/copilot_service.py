@@ -1,41 +1,56 @@
-import httpx
+from typing import Any, Dict, Optional
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+
 from agent import SOCCopilotAgent
 
-app = FastAPI(title="SOC-IA GenAI Copilot Service", version="1.0.0")
+app = FastAPI(
+    title="SOC-IA GenAI Copilot Service (Gemini + Ollama Local Failover)",
+    version="3.0.0",
+)
 copilot = SOCCopilotAgent()
+
 
 class ChatRequest(BaseModel):
     message: str
     alert_context: Optional[Dict[str, Any]] = None
-    analyst_name: Optional[str] = "Analista SOC N1"
+    analyst_name: Optional[str] = "Analista SOC"
+
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    try:
-        return await copilot.respond(
-            request.message,
-            request.alert_context,
-            request.analyst_name or "Analista SOC N1",
+    if request.alert_context:
+        result = copilot.analyze_alert(request.alert_context, request.message)
+    else:
+        result = copilot.chat_free(
+            request.message, request.analyst_name or "Analista SOC"
         )
-    except httpx.TimeoutException as exc:
-        raise HTTPException(status_code=504, detail="Ollama no respondió dentro del tiempo esperado.") from exc
-    except httpx.HTTPStatusError as exc:
+
+    if result.get("error"):
         raise HTTPException(
-            status_code=502,
-            detail=f"Ollama respondió con estado HTTP {exc.response.status_code}.",
-        ) from exc
-    except httpx.RequestError as exc:
-        raise HTTPException(status_code=502, detail="No fue posible conectar con Ollama.") from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+            status_code=result.get("status_code", 503),
+            detail=result.get("detail", "Motores de IA (Gemini y Ollama) fuera de línea"),
+        )
+    return result
+
+
+@app.get("/status")
+async def get_status():
+    return copilot.get_engines_status()
+
 
 @app.get("/health")
 async def health():
-    return {"status": "UP", "service": "genai-copilot-service"}
+    status = copilot.get_engines_status()
+    return {
+        "status": "UP",
+        "service": "genai-copilot-service",
+        "engines": status,
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("copilot_service:app", host="0.0.0.0", port=8004, reload=True)

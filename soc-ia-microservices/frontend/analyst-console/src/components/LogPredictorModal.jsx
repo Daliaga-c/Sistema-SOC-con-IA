@@ -14,7 +14,7 @@ import {
   Send,
   Cpu
 } from 'lucide-react';
-import { predictUserLog, ingestLogEvent } from '../services/api';
+import { predictUserLog, ingestLogEvent, fetchIpThreatIntel } from '../services/api';
 
 const SCENARIOS = [
   {
@@ -110,6 +110,7 @@ export default function LogPredictorModal({
 
   const [isLoading, setIsLoading] = useState(false);
   const [predictionResult, setPredictionResult] = useState(null);
+  const [threatIntel, setThreatIntel] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isEscalating, setIsEscalating] = useState(false);
   const [escalatedOk, setEscalatedOk] = useState(false);
@@ -135,6 +136,15 @@ export default function LogPredictorModal({
 
       const result = await predictUserLog(payload);
       setPredictionResult(result);
+      const ipToCheck = result?.mapped_summary?.ip_origen || payload?.source_ip || payload?.data?.srcip;
+      if (ipToCheck) {
+        try {
+          const ti = await fetchIpThreatIntel(ipToCheck);
+          setThreatIntel(ti);
+        } catch {
+          setThreatIntel(null);
+        }
+      }
     } catch (err) {
       setErrorMessage(err.message);
     } finally {
@@ -482,6 +492,40 @@ export default function LogPredictorModal({
                     <span className="font-mono font-semibold text-white">
                       {predictionResult.mapped_summary.intentos_fallidos}
                     </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Threat Intelligence Live Card */}
+              {threatIntel && (
+                <div className="bg-slate-900/95 border border-indigo-500/30 rounded-xl p-3 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-indigo-300 uppercase tracking-wider text-[10px]">
+                      🌍 Threat Intelligence en Tiempo Real ({threatIntel.source || 'Live GeoIP'})
+                    </span>
+                    <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                      Abuse Score: {threatIntel.abuse_score}%
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-1">
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">País / Región</span>
+                      <span className="font-semibold text-white">{threatIntel.country}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Ciudad</span>
+                      <span className="font-semibold text-white">{threatIntel.city || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">ISP / Organización</span>
+                      <span className="font-semibold text-white truncate block">{threatIntel.isp}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[10px]">Red Anónima / Tor</span>
+                      <span className={`font-bold ${threatIntel.is_tor || threatIntel.is_vpn_or_proxy ? 'text-rose-400' : 'text-emerald-400'}`}>
+                        {threatIntel.is_tor ? '⚠️ Nodo TOR' : (threatIntel.is_vpn_or_proxy ? '⚠️ Proxy / Hosting' : 'Limpia / Directa')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}

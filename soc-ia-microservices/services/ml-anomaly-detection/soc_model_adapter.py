@@ -392,6 +392,24 @@ class SOCModelAdapter:
             risk_score = min(99.0, base_score)
             is_anomaly = bool(risk_score >= self.threshold)
 
+        # Integración de Active Learning (Feedback Loop Humano desde PostgreSQL)
+        try:
+            al_path = Path(__file__).with_name("active_learning_state.json")
+            if al_path.exists():
+                import json
+                al_state = json.loads(al_path.read_text(encoding="utf-8"))
+                self.threshold = float(al_state.get("threshold_soc_model", self.threshold))
+                ip_val = mapped_summary.get("ip_origen", "")
+                if ip_val in al_state.get("trusted_ips", []) and mapped_summary.get("intentos_fallidos", 0) < 5:
+                    risk_score = max(0.0, risk_score - 35.0)
+                    reasons.append(f"Active Learning: IP {ip_val} validada previamente como Falso Positivo por analista")
+                elif ip_val in al_state.get("confirmed_malicious_ips", []):
+                    risk_score = min(100.0, max(risk_score, 85.0))
+                    reasons.append(f"Active Learning: IP {ip_val} confirmada como Verdadero Positivo en incidentes previos")
+                is_anomaly = bool(risk_score >= self.threshold)
+        except Exception:
+            pass
+
         verdict = "AMENAZA / INTRUSIÓN DETECTADA" if is_anomaly else "ACTIVIDAD NORMAL"
         severity = "CRÍTICA" if risk_score >= 80 else ("ALTA" if risk_score >= 60 else ("MEDIA" if risk_score >= 40 else "BAJA"))
 
