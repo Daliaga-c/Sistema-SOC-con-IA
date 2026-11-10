@@ -91,8 +91,13 @@ services:
     build:
       context: ./services/threat-intelligence-service
     container_name: soc-ia-threat-intel
-    ports:
-      - "8005:8005"
+    expose:
+      - "8005"
+    environment:
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+      - GEOIP2_CITY_DB=/data/geoip/GeoLite2-City.mmdb
+    volumes:
+      - ./data/geoip:/data/geoip:ro
     networks:
       - soc-network
 
