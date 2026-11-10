@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -18,7 +19,7 @@ FEATURE_COLUMNS: List[str] = [
     "user_privilege_level",
     "port",
 ]
-MODEL_PATH = Path(__file__).with_name("model.joblib")
+MODEL_PATH = Path(os.getenv("MODEL_PATH", Path(__file__).with_name("model.joblib")))
 
 
 class AnomalyDetector:
@@ -64,6 +65,7 @@ class AnomalyDetector:
         self.model = model
         self.version = str(bundle.get("version", self.version))
         self.feature_names = list(bundle.get("feature_names", self.feature_names))
+        self.threshold = float(bundle.get("threshold", self.threshold))
 
     def _get_metadata(self, event: Dict[str, Any]) -> Dict[str, Any]:
         metadata = event.get("metadata", {}) if isinstance(event.get("metadata"), dict) else {}
@@ -186,4 +188,3 @@ class AnomalyDetector:
             "model_version": self.version,
             "contributing_features": top_factors,
         }
-

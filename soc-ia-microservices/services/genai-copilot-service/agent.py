@@ -3,7 +3,6 @@ SOC Copilot - Agente Conversacional y Analítico Especializado en Ciberseguridad
 Integra Google Gemini (SDK google-genai) con Tool Calling, RAG sobre NIST/MITRE
 y Guardrails rigurosos de protección de datos, anti-jailbreak y seguridad defensiva.
 """
-
 from __future__ import annotations
 
 import os
@@ -370,3 +369,14 @@ INSTRUCCIONES CLAVE:
             "recommended_action": None,
             "requires_human_approval": False,
         }
+
+    async def respond(
+        self,
+        query: str,
+        alert_data: Optional[Dict[str, Any]] = None,
+        analyst_name: str = "Analista SOC N1",
+    ) -> Dict[str, Any]:
+        """Mantiene una interfaz asíncrona para consumidores del servicio HTTP."""
+        if alert_data:
+            return self.analyze_alert(alert_data, query)
+        return self.chat_free(query, analyst_name)

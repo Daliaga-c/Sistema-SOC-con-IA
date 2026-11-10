@@ -1,13 +1,20 @@
-from fastapi import FastAPI, Request
+import hmac
+import os
+
+from typing import Any, Dict, List, Literal, Optional
+
+from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+
 from model import AnomalyDetector
 from soc_model_adapter import SOCModelAdapter
+from train import train_from_feedback
 
 app = FastAPI(title="SOC-IA ML Anomaly Detection Service", version="2.0.0")
 
 auth_detector = AnomalyDetector()
 soc_detector = SOCModelAdapter()
+ACTIVE_LEARNING_TOKEN = os.getenv("ACTIVE_LEARNING_TOKEN", "")
 
 class EventPayload(BaseModel):
     event_id: Optional[str] = "EVT-TEST"
@@ -18,6 +25,17 @@ class EventPayload(BaseModel):
     status: Optional[str] = "FAILURE"
     metadata: Optional[Dict[str, Any]] = None
     model_engine: Optional[str] = "soc_model_kdd" # "soc_model_kdd" o "auth_rf"
+
+
+class FeedbackTrainingRecord(BaseModel):
+    alert_id: str
+    label: Literal["VERDADERO_POSITIVO", "FALSO_POSITIVO"]
+    event: Dict[str, Any]
+
+
+class RetrainingRequest(BaseModel):
+    records: List[FeedbackTrainingRecord]
+
 
 @app.post("/predict")
 async def predict_risk(event: EventPayload):
@@ -56,6 +74,35 @@ async def predict_soc_model(request: Request):
     result = soc_detector.predict(payload if isinstance(payload, dict) else {})
     return result
 
+@app.post("/retrain")
+async def retrain_from_analyst_feedback(
+    request: RetrainingRequest,
+    x_active_learning_token: Optional[str] = Header(default=None),
+):
+    if not ACTIVE_LEARNING_TOKEN:
+        raise HTTPException(status_code=503, detail="Active Learning token is not configured")
+    if not x_active_learning_token or not hmac.compare_digest(
+        x_active_learning_token, ACTIVE_LEARNING_TOKEN
+    ):
+        raise HTTPException(status_code=401, detail="Invalid Active Learning token")
+
+    features = []
+    labels = []
+    for record in request.records:
+        extracted_features, _ = auth_detector.extract_features(record.event)
+        features.append(extracted_features)
+        labels.append(1 if record.label == "VERDADERO_POSITIVO" else 0)
+
+    try:
+        result = train_from_feedback(features, labels, auth_detector.model_path)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    auth_detector.model = result.pop("model")
+    auth_detector.version = result["version"]
+    auth_detector.threshold = float(result["threshold"])
+    return {"status": "MODEL_UPDATED", **result}
+
 @app.get("/health")
 async def health():
     return {
@@ -68,7 +115,10 @@ async def health():
                 "loaded": soc_detector.model is not None,
                 "features_expected": 41
             }
-        }
+        },
+        "version": auth_detector.version,
+        "threshold": auth_detector.threshold,
+        "active_learning_enabled": bool(ACTIVE_LEARNING_TOKEN),
     }
 
 if __name__ == "__main__":

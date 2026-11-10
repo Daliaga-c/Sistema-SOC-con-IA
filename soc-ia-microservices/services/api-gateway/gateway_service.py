@@ -162,6 +162,7 @@ async def login_page():
 
 
 @app.post("/auth/login")
+@app.post("/api/auth/login")
 async def login(payload: LoginRequest):
     email = payload.email.strip().lower()
     user = get_user_record(email)
@@ -216,6 +217,23 @@ async def get_alerts(current_user: Dict[str, Any] = Depends(get_current_user)):
             return JSONResponse(status_code=503, content={"error": "Alerts service unavailable", "details": str(exc)})
 
 
+@app.get("/api/threat-intel/{ip}")
+async def get_ip_threat_intelligence(
+    ip: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    del current_user
+    async with httpx.AsyncClient(timeout=12.0) as client:
+        try:
+            r = await client.get(f"{THREAT_INTEL_URL}/reputation/{ip}")
+            return JSONResponse(status_code=r.status_code, content=r.json())
+        except httpx.HTTPError as exc:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Threat intelligence service unavailable", "details": str(exc)},
+            )
+
+
 @app.post("/api/alerts/{alert_id}/mitigate")
 async def mitigate_alert(alert_id: str, request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):
     body = await request.json()
@@ -228,6 +246,25 @@ async def mitigate_alert(alert_id: str, request: Request, current_user: Dict[str
             return JSONResponse(status_code=503, content={"error": "Alerts service unavailable", "details": str(exc)})
 
 
+@app.post("/api/alerts/{alert_id}/feedback")
+async def submit_alert_feedback(
+    alert_id: str,
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+):
+    body = await request.json()
+    body["analyst_name"] = current_user["name"]
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            r = await client.post(f"{ALERTS_URL}/alerts/{alert_id}/feedback", json=body)
+            return JSONResponse(status_code=r.status_code, content=r.json())
+        except httpx.HTTPError as exc:
+            return JSONResponse(
+                status_code=503,
+                content={"error": "Alerts service unavailable", "details": str(exc)},
+            )
+
+
 # Proxy hacia microservicio de Inferencia de ML
 @app.post("/api/predict")
 async def predict_anomaly(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):
@@ -237,8 +274,8 @@ async def predict_anomaly(request: Request, current_user: Dict[str, Any] = Depen
         try:
             r = await client.post(f"{ML_SERVICE_URL}/predict", json=payload)
             return JSONResponse(status_code=r.status_code, content=r.json())
-        except Exception as exc:
-            return JSONResponse(status_code=503, content={"error": "ML Service unavailable", "details": str(exc)})
+        except Exception:
+            return JSONResponse(status_code=503, content={"error": "ML Service unavailable"})
 
 
 @app.post("/api/predict/log")
@@ -260,12 +297,12 @@ async def chat_with_copilot(request: Request, current_user: Dict[str, Any] = Dep
     payload = await request.json()
     if isinstance(payload, dict):
         payload.setdefault("analyst_name", current_user.get("name", "Analista SOC"))
-    async with httpx.AsyncClient(timeout=90.0) as client:
+    async with httpx.AsyncClient(timeout=120.0) as client:
         try:
             r = await client.post(f"{COPILOT_URL}/chat", json=payload)
             return JSONResponse(status_code=r.status_code, content=r.json())
-        except Exception as exc:
-            return JSONResponse(status_code=503, content={"error": "Copilot Service unavailable", "details": str(exc)})
+        except Exception:
+            return JSONResponse(status_code=503, content={"error": "Copilot Service unavailable"})
 
 
 # Proxy hacia microservicio de Ingesta
