@@ -1,22 +1,77 @@
-# Guía de Funcionalidades Pendientes y Manual Técnico de Implementación: SOC-IA
+# Guía de Funcionalidades y Manual Técnico de Implementación: SOC-IA
 
-Este documento desglosa todas las capacidades técnicas, módulos y tareas pendientes de la plataforma **SOC-IA** (alineadas con los requerimientos del tablero de Trello oficial y el documento maestro `ARCHITECTURE.md`), explicando detalladamente **qué falta** y **cómo se debe construir paso a paso**.
+Este documento desglosa el estado real de desarrollo, los módulos implementados y las capacidades pendientes de la plataforma **SOC-IA** (alineadas con los requerimientos del proyecto, la arquitectura en `ARCHITECTURE.md` y la evaluación del modelo de Machine Learning para Wazuh).
 
 ---
 
-## 🗺️ Matriz General de Estado y Roadmap
+## 🗺️ Matriz General de Estado y Roadmap Actualizado
 
-| Módulo / Capacidad | Estado Actual | ¿Qué Falta? | Prioridad |
+| Módulo / Capacidad | Estado Actual | Situación y Qué Falta | Prioridad |
 | :--- | :--- | :--- | :--- |
-| **1. Simulador de Tráfico & Ataques** | Pendiente | Script generador interactivo (`traffic_generator.py`) para inyectar fuerza bruta y accesos anómalos. | **Alta (Inmediata)** |
-| **2. Persistencia en Base de Datos** | En Memoria (RAM) | Migración a PostgreSQL con SQLAlchemy / Alembic para persistir alertas, incidentes y auditoría. | **Alta** |
-| **3. Autenticación Real JWT & MFA** | Mock en Frontend | Generación de tokens JWT en el Gateway, hashing de passwords con `bcrypt` y validación TOTP/OTP. | **Media-Alta** |
-| **4. Conector Real Wazuh SIEM** | Desacoplado | Conexión con Wazuh Manager API (55000) e ingesta de logs via Syslog/Filebeat hacia `ingestion_service`. | **Media (Fase 3)** |
-| **5. Wazuh Active Response Real** | Mock en Backend | Despacho de comandos de bloqueo de firewall via API de Wazuh `/active-response` tras aprobación HITL. | **Media (Fase 3)** |
-| **6. GenAI Copilot con Vector DB (RAG)** | Base en Memoria | Indexación de documentos NIST SP 800-61 y MITRE ATT&CK en base vectorial (ChromaDB) con Gemini. | **Media** |
-| **7. Modelo ML Entrenado & SHAP** | Heurística ponderada | Entrenamiento con dataset CIC-IDS2017, guardado en `.joblib` y explicabilidad matemática con SHAP. | **Media** |
-| **8. Threat Intel con APIs Externas** | Cache local fijo | Consulta en tiempo real a las APIs de AbuseIPDB y base local MaxMind GeoIP2. | **Baja** |
-| **9. Active Learning (Feedback Loop)** | Endpoint Mock | Pipeline de reentrenamiento que ajusta pesos de ML a partir de alertas marcadas como TP o FP. | **Baja** |
+| **1. Simulador de Tráfico & Ataques** | ✅ **Completado** | Implementado en `scripts/traffic_generator.py` con ráfagas T1110 (Fuerza Bruta), T1078 (Acceso Nocturno) y pruebas automatizadas. | Resuelto |
+| **2. Persistencia en Base de Datos** | ✅ **Completado** | Implementado en `services/alerts-incidents-service/database.py` con SQLAlchemy, soporte PostgreSQL/SQLite, tablas `alerts` y `audit_logs`. | Resuelto |
+| **3. Autenticación Real JWT & MFA** | ✅ **Completado** | Implementado en `services/api-gateway/gateway_service.py` con tokens JWT (HS256), hashing `bcrypt`, validación OTP y RBAC (Analista N1, N2, Admin). | Resuelto |
+| **4. Conector de Ingesta Wazuh SIEM** | 🟡 **Parcial / Funcional** | `wazuh_listener.py` y `wazuh_client.py` normalizan alertas OCSF. Falta validar en vivo contra el clúster `wazuh-docker`. | **Media-Alta** |
+| **5. Modelo ML para Inicios de Sesión** | 🟡 **En Evolución** | **Dictamen modelo externo (`modelo_soc.pkl`):** Incompatible (basado en 41 campos NSL-KDD de red). **Acción:** Reentrenar el modelo nativo de `ml-anomaly-detection` con variables enriquecidas de autenticación Wazuh. | **Alta** |
+| **6. Threat Intel con APIs Externas** | 🟡 **Cache Mock** | `threat_intel_service.py` funciona con cache local. Falta conectar la API real de AbuseIPDB y la base MaxMind GeoLite2. | **Media** |
+| **7. Wazuh Active Response Real** | 🟡 **Estructurado** | Endpoint `/active-response` preparado con bandera `ENABLE_WAZUH_ACTIVE_RESPONSE`. Falta prueba de fuego con agente Wazuh real. | **Media** |
+| **8. GenAI Copilot con Vector DB (RAG)** | 🟡 **Base Lista** | Base vectorial ChromaDB (`knowledge_base.json` e indexer). Falta cargar corpus documental exhaustivo NIST SP 800-61 y MITRE ATT&CK. | **Media** |
+| **9. Active Learning (Feedback Loop)** | 🟡 **Backend Listo** | Guardado de feedback (`TP` / `FP`) en base de datos. Falta el script/cronjob de reentrenamiento periódico automatizado. | **Baja** |
+
+---
+
+## 📌 ¿Qué funcionalidades se necesitan hacer ahora mismo? (Prioridades Inmediatas)
+
+### Prioridad 1: Reentrenamiento y Evolución del Modelo ML de Autenticación (`ml-anomaly-detection`)
+* **Problema:** El archivo `modelo_soc.pkl` proporcionado por la compañera fue entrenado sobre el dataset clásico NSL-KDD (1999). Dicho dataset exige 41 métricas de paquetes/red (`src_bytes`, `dst_bytes`, `serror_rate`, `same_srv_rate`, etc.) que **Wazuh no emite al registrar eventos de autenticación**.
+* **Qué se debe hacer:**
+  1. Mantener y expandir el modelo existente en `services/ml-anomaly-detection/model.py`.
+  2. Ampliar el vector de características con datos que Wazuh sí entrega o que el SOC enriquece:
+     * `failed_attempts_last_5min` (frecuencia de fallos recientes).
+     * `is_night` (análisis temporal del timestamp del evento).
+     * `is_foreign_ip` (análisis de IP privada vs pública).
+     * `user_privilege_level` (evaluación de cuentas de alto impacto: root, admin, domain admins).
+     * `port` (puerto de autenticación: 22 SSH, 3389 RDP, 443 Web).
+     * **NUEVO:** `threat_intel_score` (puntuación de reputación proveniente de Threat Intel).
+     * **NUEVO:** `same_user_failure_ratio` (relación de fallos sobre el mismo usuario objetivo).
+  3. Ejecutar `train.py` para regenerar `model.joblib` y calcular valores de explicabilidad SHAP para cada inferencia.
+
+---
+
+### Prioridad 2: Enriquecimiento de Threat Intelligence en Tiempo Real (`threat-intelligence-service`)
+* **Problema:** `threat_intel_service.py` responde actualmente con un diccionario estático en memoria para dos IPs de prueba.
+* **Qué se debe hacer:**
+  1. Integrar llamada asíncrona a la API de **AbuseIPDB** (`https://api.abuseipdb.com/api/v2/check`) utilizando una API Key configurada en `.env`.
+  2. Incorporar la base de datos local `GeoLite2-City.mmdb` (librería `geoip2`) para resolver geolocalización (país, ciudad, ASN) sin latencia ni cuotas de API.
+  3. Conservar la capa de cache en memoria/Redis para no agotar la cuota diaria de consultas gratuitas.
+
+---
+
+### Prioridad 3: Verificación End-to-End con Clúster Wazuh Docker (`wazuh-docker`)
+* **Problema:** Los scripts de escucha y cliente están desarrollados pero requieren validación con el contenedor activo de Wazuh Manager.
+* **Qué se debe hacer:**
+  1. Levantar el clúster con `docker-compose -f wazuh-docker/single-node/docker-compose.yml up -d`.
+  2. Inyectar las reglas personalizadas de autenticación en `/var/ossec/etc/rules/local_rules.xml` (reglas 100002, 100003, 100100).
+  3. Ejecutar `wazuh_listener.py` para verificar la ingesta continua de eventos desde `/var/ossec/logs/alerts/alerts.json` hacia `http://localhost:8000/api/ingest`.
+  4. Habilitar `ENABLE_WAZUH_ACTIVE_RESPONSE=true` y validar la ejecución de `firewall-drop0` ante un bloqueo aprobado por el analista.
+
+---
+
+### Prioridad 4: Automatización del Bucle de Active Learning
+* **Problema:** Los analistas registran retroalimentación (Verdadero Positivo / Falso Positivo) desde la consola, pero no hay un proceso que use esos datos para ajustar el modelo.
+* **Qué se debe hacer:**
+  1. Crear un script `services/ml-anomaly-detection/retrain_feedback.py`.
+  2. Leer los registros de la tabla `alerts` con campo `feedback` diligenciado.
+  3. Si la tasa de falsos positivos en IPs o usuarios específicos supera el umbral, recalibrar el umbral de decisión (`threshold`) o reentrenar los estimadores de Random Forest.
+
+---
+
+### Prioridad 5: RAG Extendido para el Copiloto de Ciberseguridad (`genai-copilot-service`)
+* **Problema:** La base vectorial actual cuenta con un resumen básico en `knowledge_base.json`.
+* **Qué se debe hacer:**
+  1. Añadir los manuales completos de respuesta a incidentes en formato Markdown o texto en `services/genai-copilot-service/corpus/`.
+  2. Ejecutar `indexer.py` para generar los embeddings vectoriales definitivos en `chroma_db/`.
+  3. Probar recomendaciones de mitigación en tiempo real para tácticas MITRE ATT&CK T1110 (Fuerza Bruta) y T1078 (Cuentas Válidas).
 
 ---
 
