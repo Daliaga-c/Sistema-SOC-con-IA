@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Shield, KeyRound, Mail, Lock, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
+import { login } from '../services/api';
 
 export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('analista.soc@empresa.com');
-  const [password, setPassword] = useState('SecurePass2026!');
+  const [password, setPassword] = useState('soc-ia-2025');
   const [mfaCode, setMfaCode] = useState('482910');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -23,19 +24,16 @@ export default function Login({ onLoginSuccess }) {
     }
 
     setIsLoading(true);
-
-    // Simulación de verificación de JWT / MFA
-    setTimeout(() => {
-      setIsLoading(false);
-      const user = {
-        name: 'Diego Aliaga',
-        role: 'Analista SOC N1',
-        email: email,
-        token: `jwt-${Date.now()}`
-      };
+    try {
+      const response = await login(email, password, mfaCode);
+      const user = { ...response.user, token: response.token };
       localStorage.setItem('soc_session', JSON.stringify(user));
       onLoginSuccess(user);
-    }, 600);
+    } catch (err) {
+      setError(err.message || 'No se pudo iniciar sesión.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -144,6 +144,7 @@ async def login_page():
 
 
 @app.post("/auth/login")
+@app.post("/api/auth/login")
 async def login(payload: LoginRequest):
     email = payload.email.strip().lower()
     user = get_user_record(email)
@@ -264,7 +265,7 @@ async def predict_anomaly(request: Request, current_user: Dict[str, Any] = Depen
 async def chat_with_copilot(request: Request, current_user: Dict[str, Any] = Depends(get_current_user)):
     del current_user
     payload = await request.json()
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=120.0) as client:
         try:
             r = await client.post(f"{COPILOT_URL}/chat", json=payload)
             return JSONResponse(status_code=r.status_code, content=r.json())

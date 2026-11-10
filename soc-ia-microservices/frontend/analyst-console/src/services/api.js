@@ -1,15 +1,40 @@
 const API_BASE = '/api';
 
-export async function fetchAlerts() {
-  const res = await fetch(`${API_BASE}/alerts`);
+async function apiFetch(path, options = {}) {
+  const session = JSON.parse(localStorage.getItem('soc_session') || 'null');
+  const headers = new Headers(options.headers || {});
+  if (path !== '/auth/login' && session?.token) {
+    headers.set('Authorization', `Bearer ${session.token}`);
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
-    throw new Error(`Error ${res.status}: Fallo al obtener alertas del backend`);
+    let detail = `Error ${res.status}: solicitud fallida`;
+    try {
+      const body = await res.json();
+      detail = body.detail || body.error || detail;
+    } catch {
+      // Keep the HTTP status when the server does not return JSON.
+    }
+    throw new Error(detail);
   }
   return await res.json();
 }
 
+export async function login(email, password, otp) {
+  return apiFetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, otp })
+  });
+}
+
+export async function fetchAlerts() {
+  return apiFetch('/alerts');
+}
+
 export async function sendCopilotMessage(message, alertContext = null, analystName = 'Analista SOC N1') {
-  const res = await fetch(`${API_BASE}/chat`, {
+  return apiFetch('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -18,14 +43,10 @@ export async function sendCopilotMessage(message, alertContext = null, analystNa
       analyst_name: analystName
     })
   });
-  if (!res.ok) {
-    throw new Error(`Error ${res.status}: Fallo en respuesta de Copilot`);
-  }
-  return await res.json();
 }
 
 export async function executeMitigation(alertId, action, target, analystName = 'Diego Aliaga') {
-  const res = await fetch(`${API_BASE}/alerts/${alertId}/mitigate`, {
+  return apiFetch(`/alerts/${alertId}/mitigate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -35,14 +56,10 @@ export async function executeMitigation(alertId, action, target, analystName = '
       approved_by_human: true
     })
   });
-  if (!res.ok) {
-    throw new Error(`Error ${res.status}: No se pudo ejecutar la mitigación`);
-  }
-  return await res.json();
 }
 
 export async function submitAlertFeedback(alertId, feedbackType, notes = '', analystName = 'Diego Aliaga') {
-  const res = await fetch(`${API_BASE}/alerts/${alertId}/feedback`, {
+  return apiFetch(`/alerts/${alertId}/feedback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -51,8 +68,4 @@ export async function submitAlertFeedback(alertId, feedbackType, notes = '', ana
       notes: notes
     })
   });
-  if (!res.ok) {
-    throw new Error(`Error ${res.status}: Fallo al registrar feedback`);
-  }
-  return await res.json();
 }
