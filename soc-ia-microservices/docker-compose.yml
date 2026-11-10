@@ -43,6 +43,11 @@ services:
     container_name: soc-ia-ml-service
     ports:
       - "8002:8002"
+    environment:
+      - ACTIVE_LEARNING_TOKEN=${ACTIVE_LEARNING_TOKEN:-}
+      - MODEL_PATH=/app/model-data/model.joblib
+    volumes:
+      - mlmodeldata:/app/model-data
     networks:
       - soc-network
 
@@ -54,6 +59,8 @@ services:
       - "8003:8003"
     environment:
       - DATABASE_URL=postgresql+psycopg://soc_admin:soc_secure_password@postgres-db:5432/soc_incidents
+      - ML_SERVICE_URL=http://ml-anomaly-detection:8002
+      - ACTIVE_LEARNING_TOKEN=${ACTIVE_LEARNING_TOKEN:-}
     depends_on:
       - postgres-db
     networks:
@@ -88,8 +95,13 @@ services:
     build:
       context: ./services/threat-intelligence-service
     container_name: soc-ia-threat-intel
-    ports:
-      - "8005:8005"
+    expose:
+      - "8005"
+    environment:
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+      - GEOIP2_CITY_DB=/data/geoip/GeoLite2-City.mmdb
+    volumes:
+      - ./data/geoip:/data/geoip:ro
     networks:
       - soc-network
 
@@ -103,6 +115,7 @@ services:
 
 volumes:
   pgdata:
+  mlmodeldata:
 
 networks:
   soc-network:

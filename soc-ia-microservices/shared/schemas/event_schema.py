@@ -30,7 +30,7 @@ class ThreatIntelEnrichment(BaseModel):
     ip: str
     country: Optional[str] = None
     city: Optional[str] = None
-    abuse_confidence_score: int = Field(0, ge=0, le=100, description="Score de reputación de 0 a 100 (AbuseIPDB)")
+    abuse_confidence_score: Optional[int] = Field(None, ge=0, le=100, description="Score de reputación de 0 a 100 (AbuseIPDB)")
     is_tor_or_proxy: bool = False
     isp: Optional[str] = None
 
